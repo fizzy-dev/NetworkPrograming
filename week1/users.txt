@@ -1,0 +1,9 @@
+quang 123456 2
+quangtran 1234 2
+quang1 123456 2
+quang2 123456 0
+quang3 123456 0
+quang4 123456 3
+quang5 123456 1
+quang0 123456 2
+quangtest 12345 2

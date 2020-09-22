@@ -1,0 +1,8 @@
+constant poiter :int *const ptr (hằng con trỏ-không thể thay đổi đia chỉ của con trỏ)
+poiter to constant :const int *ptr (con trỏ hằng,không thể thay đổi giá trị ô nhớ được trỏ đến)
+
+-calloc
+-malloc
+-realoc
+
+-struct
