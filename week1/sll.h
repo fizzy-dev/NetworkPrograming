@@ -16,124 +16,17 @@ typedef struct node
    struct node *next;
 }node;
 
-struct node *head = NULL;
-struct node *current = NULL;
 
 //hien thi danh sach
-void printList()
-{
-   struct node *ptr = head;
-   printf("\n[ ");
+void printList();
+void insertFirst(char username[], char password[], int status);
 
-   //bat dau tu phan dau danh sach
-   while (ptr != NULL)
-   {
-      printf("(%s,%d) ", ptr->user.username, ptr->user.status);
-      ptr = ptr->next;
-   }
+struct node *deleteFirst();
+bool isEmpty();
+int length();
+struct node *find(char *key);
 
-   printf(" ]\n");
-}
-
-//chen link tai vi tri dau tien
-void insertFirst(char username[], char password[], int status)
-{
-   //tao mot link
-   struct node *link = (struct node *)malloc(sizeof(struct node));
-
-   strcpy(link->user.username, username);
-   strcpy(link->user.password, password);
-   link->user.status = status;
-   //tro link nay toi first node cu
-   link->next = head;
-   //tro first toi first node moi
-   head = link;
-}
-
-//xoa phan tu dau tien
-struct node *deleteFirst()
-{
-
-   //luu tham chieu toi first link
-   struct node *tempLink = head;
-
-   //danh dau next toi first link la first
-   head = head->next;
-
-   //tra ve link bi xoa
-   return tempLink;
-}
-
-//kiem tra list co trong hay khong
-bool isEmpty()
-{
-   return head == NULL;
-}
-
-int length()
-{
-   int length = 0;
-   struct node *current;
-
-   for (current = head; current != NULL; current = current->next)
-   {
-      length++;
-   }
-
-   return length;
-}
-
-//tim mot link voi key da cho
-struct node *find(char *key)
-{
-
-   //bat dau tim tu first link
-   struct node *current = head;
-
-   //neu list la trong
-   if (head == NULL)
-   {
-      return NULL;
-   }
-
-   //duyet qua list
-   while (strcmp(current->user.username, key) != 0)
-   {
-      //neu day la last node
-      if (current->next == NULL)
-      {
-         return NULL;
-      }
-      else
-      {
-         //di chuyen toi next link
-         current = current->next;
-      }
-   }
-
-   //neu tim thay du lieu, tra ve link hien tai
-   return current;
-}
-
-void saveUsersToFile(FILE *fp)
-{
-   //bat dau tim tu first link
-   struct node *current = head;
-
-   //neu list la trong
-   if (head == NULL)
-   {
-      return NULL;
-   }
-
-   //duyet qua list
-   while (current != NULL)
-   {
-         //di chuyen toi next link
-         fprintf(fp, "%s %s %d\n", current->user.username, current->user.password, current->user.status);
-         current = current->next;  
-   }
-}
+void saveUsersToFile(FILE *fp);
 
 // //xoa mot link voi key da cho
 // struct node* deleteKey(int key){

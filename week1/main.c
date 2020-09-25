@@ -1,21 +1,21 @@
-#include <stdio.h>
 #include "sll.h"
-#include <string.h>
 
 void insertFromFile(FILE *fp);
-void menu();
+void menu(FILE *fp,char filename[]);
 
 void main()
 {
    FILE *fp;
-   fp = fopen("users.txt", "r+");
+   char filename[20]="users.txt";
+
+   fp = fopen(filename, "r+");
    if (fp == NULL)
    {
       printf("Mo file khong thanh cong");
       exit(1);
    }
    insertFromFile(fp);
-   menu(fp);
+   menu(fp,filename);
 
    printf("Danh sach tai khoan: ");
    //in danh sach
@@ -24,7 +24,7 @@ void main()
    fclose(fp);
 }
 
-void menu(FILE *fp)
+void menu(FILE *fp,char filename[])
 {
    printf("\n");
    node *currentUser = NULL;
@@ -60,11 +60,11 @@ void menu(FILE *fp)
             fclose(fp);
 
             //ghi lai file tu linklist
-            fp = fopen("users.txt", "w");
+            fp = fopen(filename, "w");
             saveUsersToFile(fp);
             fclose(fp);
             // mo lai file de doc
-            fp = fopen("users.txt", "r+");
+            fp = fopen(filename, "r+");
          }
          break;
       case 2:
@@ -113,15 +113,15 @@ void menu(FILE *fp)
                      {
                         currentUser->user.status = 1;
                         fclose(fp);
-                        fp = fopen("users.txt", "w");
+                        fp = fopen(filename, "w");
 
                         //ghi lai file tu linklist
-                        fp = fopen("users.txt", "w");
+                        fp = fopen(filename, "w");
                         saveUsersToFile(fp);
                         fclose(fp);
                         // mo lai file de doc
                         printf("Account activated!!\n");
-                        fp = fopen("users.txt", "r+");
+                        fp = fopen(filename, "r+");
                         break;
                      }
                      else
@@ -134,14 +134,14 @@ void menu(FILE *fp)
                   {
                      currentUser->user.status = 0;
                      fclose(fp);
-                     fp = fopen("users.txt", "w");
+                     fp = fopen(filename, "w");
 
                      //ghi lai file tu linklist
-                     fp = fopen("users.txt", "w");
+                     fp = fopen(filename, "w");
                      saveUsersToFile(fp);
                      fclose(fp);
                      // mo lai file de doc
-                     fp = fopen("users.txt", "r+");
+                     fp = fopen(filename, "r+");
                      printf("Tai khoan cua ban da bi khoa vi nhap sai qua 3 lan!!\n");
                   }
                }
@@ -178,11 +178,11 @@ void menu(FILE *fp)
                   currentUser->user.status = 0;
                   fclose(fp);
                   //ghi lai file tu linklist
-                  fp = fopen("users.txt", "w");
+                  fp = fopen(filename, "w");
                   saveUsersToFile(fp);
                   fclose(fp);
                   // mo lai file de doc
-                  fp = fopen("users.txt", "r+");
+                  fp = fopen(filename, "r+");
                   printf("Tai khoan cua ban da bi khoa vi nhap sai mk 3 lan \n");
                }
             }
@@ -232,10 +232,10 @@ void menu(FILE *fp)
             printf("Nhap mat khau moi:  ");
             scanf("%s",currentUser->user.password);
             fclose(fp);
-            fp=fopen("users.txt","w");
+            fp=fopen(filename,"w");
             saveUsersToFile(fp);
             fclose(fp);
-            fp=fopen("users.txt","r+");
+            fp=fopen(filename,"r+");
             printf("Ban da thay doi mat khau thanh cong!\n");
          }
       }
