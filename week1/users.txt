@@ -1,5 +1,3 @@
-quang8 123456 2
-quang fff 0
 quang5 123456 2
 quang4 123456 1
 quang3 123456 0
