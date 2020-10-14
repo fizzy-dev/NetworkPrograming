@@ -1,0 +1,6 @@
+quang5 123456 2 google.com
+quang4 123456 1 facebook.com
+quang3 123456 0 216.58.200.14
+quang2 123456 2 facebook.com
+quang1 123456 1 216.58.200.13
+quang0 123456 0 google.com.vn
