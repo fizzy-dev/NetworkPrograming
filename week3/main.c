@@ -284,6 +284,8 @@ void menu(FILE *fp, char filename[])
             if (match(currentUser->user.homepage, DomainPattern) == 1)
             {
                printf("%s\n", currentUser->user.homepage);
+            }else{
+               printf("Sai ip hoac domain,vui long kiem tra lai\n");
             }
          }
          break;
@@ -302,6 +304,8 @@ void menu(FILE *fp, char filename[])
             if (match(currentUser->user.homepage, IpPattern) == 1)
             {
                printf("%s\n", currentUser->user.homepage);
+            }else{
+               printf("sai ip hoac domain,vui long kiem tra lại\n");
             }
          }
          break;
@@ -320,6 +324,9 @@ void insertFromFile(FILE *fp)
    char homepage[50];
    while ((fscanf(fp, "%s %s %d %s", username, pass, &status, homepage)) != EOF)
    {
+      if(homepage=='\n'){
+         strcpy(homepage," ");
+      }
       insertFirst(username, pass, status, homepage);
    }
 }
