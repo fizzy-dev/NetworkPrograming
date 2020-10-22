@@ -52,27 +52,39 @@ int main(int argc, char *argv[])
         exit(0);
     }
 
-    do
-    {
-        user user1;
-        char buffer[100];
-        int g = 0;
-        printf("Input username: ");
-        g = scanf("%[^\n]", user1.username);
-        getchar();
-        printf("Input password: ");
-        g = scanf("%[^\n]", user1.password);
-        getchar();
-        sendto(sockfd, (struct user *)&user1, MAXLINE, 0, (struct sockaddr *)&servaddr, sizeof(servaddr));
+    user user1;
+    char buffer[100];
+    char password[20];
+    int g = 0;
+    printf("Input username: ");
+    g = scanf("%s", user1.username);
+    getchar();
+    printf("Input password: ");
+    g = scanf("%s", user1.password);
+    getchar();
+    sendto(sockfd, (struct user *)&user1, MAXLINE, 0, (struct sockaddr *)&servaddr, sizeof(servaddr));
 
-        // waiting for response
-        recvfrom(sockfd, buffer, sizeof(buffer), 0, (struct sockaddr *)NULL, NULL);
-        puts(buffer);
-        // recvfrom(sockfd, buffer, sizeof(buffer), 0, (struct sockaddr *)NULL, NULL);
-        // puts(buffer);
-        //while ((getchar()) != '\n');
-        puts("-------------------------");
-    } while (1);
+    // waiting for response
+    recvfrom(sockfd, buffer, sizeof(buffer), 0, (struct sockaddr *)NULL, NULL);
+    puts(buffer);
+    if (strcmp(buffer, "Sai mat khau") == 0)
+    {
+        // while(1)
+        // {
+        //     printf("Input password: ");
+        //     g = scanf("%s", password);
+        //     getchar();
+
+        //     sendto(sockfd, password, MAXLINE, 0, (struct sockaddr *)&servaddr, sizeof(servaddr));
+
+        //     recvfrom(sockfd, buffer, sizeof(buffer), 0, (struct sockaddr *)NULL, NULL);
+        //     puts(buffer);
+        // }
+    }
+    // recvfrom(sockfd, buffer, sizeof(buffer), 0, (struct sockaddr *)NULL, NULL);
+    // puts(buffer);
+    //while ((getchar()) != '\n');
+    puts("-------------------------");
     // close the descriptor
     close(sockfd);
     return 0;

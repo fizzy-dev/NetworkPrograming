@@ -22,6 +22,7 @@ int main(int argc, char *argv[])
 {
 	FILE *fp;
 	node *findUser = NULL;
+	node *currentUser = NULL;
 	char filename[20] = "users.txt";
 	fp = fopen(filename, "r+");
 	if (fp == NULL)
@@ -44,8 +45,8 @@ int main(int argc, char *argv[])
 	char *port_number = argv[1];
 	int port = atoi(port_number);
 	user user1;
-	char error[100];
-	char success[100];
+	char password[100];
+	char status[100];
 	int listenfd, len;
 	struct sockaddr_in servaddr, cliaddr;
 	bzero(&servaddr, sizeof(servaddr));
@@ -66,31 +67,14 @@ int main(int argc, char *argv[])
 
 		printf("%s\n", user1.username);
 		printf("%s\n", user1.password);
+		int check=checkUser(user1.username,user1.password,listenfd,status,cliaddr);
 
-		//check account
-		findUser = find(user1.username);
-		if (findUser == NULL) //neu khong co user name
+		while(check==1)
 		{
-			strcpy(error, "Tai khoan khong ton tai");
-			sendto(listenfd, error, MAXLINE, 0, (struct sockaddr *)&cliaddr, sizeof(cliaddr));
-		}else{  //neu nhap sai mat khau
-			if(strcmp(user1.password,findUser->user.password)!=0){
-				strcpy(error,"Sai mat khau");
-				sendto(listenfd, error, MAXLINE, 0, (struct sockaddr *)&cliaddr, sizeof(cliaddr));
-			}else{ //neu tai khoan dang bi khoa hoac chua active
-				if(findUser->user.status==0 || findUser->user.status==2){
-					strcpy(error,"Account not ready");
-					sendto(listenfd, error, MAXLINE, 0, (struct sockaddr *)&cliaddr, sizeof(cliaddr));
-				}else{ //nhap dung mat khau
-					strcpy(success,"Ok");
-					sendto(listenfd, success, MAXLINE, 0, (struct sockaddr *)&cliaddr, sizeof(cliaddr));
-				}
-			}
-		}
-
-		// send the response to client
-		// sendto(listenfd, success, MAXLINE, 0, (struct sockaddr *)&cliaddr, sizeof(cliaddr));
-		// sendto(listenfd, error, MAXLINE, 0, (struct sockaddr *)&cliaddr, sizeof(cliaddr));
+			recvfrom(listenfd, password, sizeof(password),0, (struct sockaddr *)&cliaddr, &len);
+			puts(password);
+			check=checkUser(user1.username,password,listenfd,status,cliaddr);
+	    }
 	}
 	fclose(fp);
 }
@@ -103,5 +87,41 @@ void insertFromFile(FILE *fp)
 	while ((fscanf(fp, "%s %s %d", username, pass, &status)) != EOF)
 	{
 		insertFirst(username, pass, status);
+	}
+}
+
+int checkUser(char *username, char *password, int listenfd, char *status, struct sockaddr_in cliaddr)
+{
+	struct node *finduser = NULL;
+	finduser = find(username);
+	if (finduser == NULL)
+	{
+		strcpy(status, "Tai khoan khong ton tai");
+		sendto(listenfd, status, MAXLINE, 0, (struct sockaddr *)&cliaddr, sizeof(cliaddr));
+		return 0;
+	}
+	else
+	{
+		if (strcmp(finduser->user.password, password) != 0)
+		{
+			strcpy(status, "Sai mat khau");
+			sendto(listenfd, status, MAXLINE, 0, (struct sockaddr *)&cliaddr, sizeof(cliaddr));
+			return 1;
+		}
+		else
+		{
+			if (finduser->user.status == 0 || finduser->user.status == 2)
+			{
+				strcpy(status, "Account not ready");
+				sendto(listenfd, status, MAXLINE, 0, (struct sockaddr *)&cliaddr, sizeof(cliaddr));
+				return 2;
+			}
+			else
+			{ //ok
+				strcpy(status, "OK");
+				sendto(listenfd, status, MAXLINE, 0, (struct sockaddr *)&cliaddr, sizeof(cliaddr));
+				return 3;
+			}
+		}
 	}
 }
