@@ -52,6 +52,8 @@ int main(int argc, char *argv[])
         exit(0);
     }
 
+    while(1){
+
     user user1;
     char buffer[100];
     char password[20];
@@ -67,24 +69,62 @@ int main(int argc, char *argv[])
     // waiting for response
     recvfrom(sockfd, buffer, sizeof(buffer), 0, (struct sockaddr *)NULL, NULL);
     puts(buffer);
-    if (strcmp(buffer, "Sai mat khau") == 0)
+    int i = 0;
+    //neu nhap sai ma khau
+    while (strcmp(buffer, "Sai mat khau") == 0)
     {
-        // while(1)
-        // {
-        //     printf("Input password: ");
-        //     g = scanf("%s", password);
-        //     getchar();
+        i++;
+        printf("Input password: ");
+        g = scanf("%s", password);
+        getchar();
 
-        //     sendto(sockfd, password, MAXLINE, 0, (struct sockaddr *)&servaddr, sizeof(servaddr));
+        sendto(sockfd, password, MAXLINE, 0, (struct sockaddr *)&servaddr, sizeof(servaddr));
 
-        //     recvfrom(sockfd, buffer, sizeof(buffer), 0, (struct sockaddr *)NULL, NULL);
-        //     puts(buffer);
-        // }
+        recvfrom(sockfd, buffer, sizeof(buffer), 0, (struct sockaddr *)NULL, NULL);
+        puts(buffer);
+        if (i > 1)
+        {
+            puts("Tai khoan cua ban bi tam khoa vi da nhap qua 3 lan!");
+            break;
+        }
     }
-    // recvfrom(sockfd, buffer, sizeof(buffer), 0, (struct sockaddr *)NULL, NULL);
-    // puts(buffer);
-    //while ((getchar()) != '\n');
+
+    if (strcmp(buffer, "OK") == 0)
+    {
+        int input;
+        char bye[100];
+        printf("hello,%s\n", user1.username);
+        do
+        {
+            printf("1.Doi password\n2.Dang xuat\nInput:");
+            scanf("%d", &input);
+            if (input == 1)
+            {
+                printf("Newpassword:");
+                scanf("%s", password);
+                getchar();
+                sendto(sockfd, password, MAXLINE, 0, (struct sockaddr *)&servaddr, sizeof(servaddr));
+                puts("------------------------------------------");
+                // waiting for response
+                recvfrom(sockfd, buffer, sizeof(buffer), 0, (struct sockaddr *)NULL, NULL);
+                puts(buffer);
+                recvfrom(sockfd, buffer, sizeof(buffer), 0, (struct sockaddr *)NULL, NULL);
+                puts(buffer);
+            }
+            if(input==2){
+                printf("nhap 'bye' de dang xuat!:");
+                scanf("%s",bye);
+                if(strcmp(bye,"bye")!=0){
+                    printf("hix,ban nhap sai!!!!\n");
+                }else{
+                    break;
+                }
+            }
+        } while (1);
+    }
+
     puts("-------------------------");
+    }
     // close the descriptor
     close(sockfd);
     return 0;

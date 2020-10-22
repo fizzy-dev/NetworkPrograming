@@ -23,6 +23,8 @@ int main(int argc, char *argv[])
 	FILE *fp;
 	node *findUser = NULL;
 	node *currentUser = NULL;
+	char only_string[100];
+	char only_number[100];
 	char filename[20] = "users.txt";
 	fp = fopen(filename, "r+");
 	if (fp == NULL)
@@ -67,14 +69,60 @@ int main(int argc, char *argv[])
 
 		printf("%s\n", user1.username);
 		printf("%s\n", user1.password);
-		int check=checkUser(user1.username,user1.password,listenfd,status,cliaddr);
+		currentUser = find(user1.username);
+		int check = checkUser(user1.username, user1.password, listenfd, status, cliaddr);
+		int i = 0;
 
-		while(check==1)
+		while (check == 3)
 		{
-			recvfrom(listenfd, password, sizeof(password),0, (struct sockaddr *)&cliaddr, &len);
+			recvfrom(listenfd, password, sizeof(password), 0, (struct sockaddr *)&cliaddr, &len);
 			puts(password);
-			check=checkUser(user1.username,password,listenfd,status,cliaddr);
-	    }
+
+			// split data to only string and only number
+			if (split(password, only_number, only_string) == 1)
+			{
+				
+			}
+			else
+			{
+				//puts("Error");
+				strcpy(only_number, "Mat khau khong hop le");
+				strcpy(only_string, "");
+			}
+
+			// send the response to client
+			sendto(listenfd, only_number, MAXLINE, 0, (struct sockaddr *)&cliaddr, sizeof(cliaddr));
+			sendto(listenfd, only_string, MAXLINE, 0, (struct sockaddr *)&cliaddr, sizeof(cliaddr));
+
+			strcpy(currentUser->user.password, password);
+			fclose(fp);
+			//ghi lai file tu linklist
+			fp = fopen(filename, "w");
+			saveUsersToFile(fp);
+			fclose(fp);
+			// mo lai file de doc
+			fp = fopen(filename, "r+");
+		}
+
+		while (check == 1)
+		{
+			i++;
+			recvfrom(listenfd, password, sizeof(password), 0, (struct sockaddr *)&cliaddr, &len);
+			puts(password);
+			check = checkUser(user1.username, password, listenfd, status, cliaddr);
+			if (i > 1)
+			{
+				currentUser->user.status = 0;
+				fclose(fp);
+				//ghi lai file tu linklist
+				fp = fopen(filename, "w");
+				saveUsersToFile(fp);
+				fclose(fp);
+				// mo lai file de doc
+				fp = fopen(filename, "r+");
+				break;
+			}
+		}
 	}
 	fclose(fp);
 }
@@ -124,4 +172,41 @@ int checkUser(char *username, char *password, int listenfd, char *status, struct
 			}
 		}
 	}
+}
+
+int split(char *buffer, char *only_number, char *only_string)
+{
+
+	// Only number in buffer converts to string only_number
+	strcpy(only_string, buffer);
+	int k = 0;
+	strcpy(only_number, buffer);
+	int j = 0;
+
+	// if number, copy to only_number
+	// if character, copy to only_string
+	int m = 0;
+	for (int i = 0; i < 100; i++)
+	{
+		char ch = only_number[i];
+		if (ch == '\0')
+			break;
+		if (ch >= '0' && ch <= '9')
+		{
+			only_number[j] = ch;
+			j++;
+		}
+		else if ((ch >= 'a' && ch <= 'z') || (ch == ' '))
+		{
+			only_string[k] = ch;
+			k++;
+		}
+		else
+		{
+			return 0;
+		}
+	}
+	only_number[j] = '\0';
+	only_string[k] = '\0';
+	return 1;
 }
