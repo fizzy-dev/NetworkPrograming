@@ -1,105 +1,79 @@
-// UDP Echo Client
-
+// udp client driver program
 #include <stdio.h>
-#include <string.h>
-#include <sys/time.h>
-#include <netdb.h>
+#include <strings.h>
 #include <sys/types.h>
+#include <arpa/inet.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
-#define SERVER_UDP_PORT 2466
-#define MAXLEN 4096
-#define DEFLEN 64
+#include <unistd.h>
+#include <stdlib.h>
+#include <string.h>
+#define MAXLINE 1000
 
-long delay(struct timeval t1, struct timeval t2)
+typedef struct user
 {
-    long d;
-    d = (t2.tv_sec - t1.tv_sec) * 1000;
-    d += ((t2.tv_usec - t1.tv_usec + 500) / 1000);
-    return (d);
-}
+    char username[20];
+    char password[20];
+} user;
 
-int main(int argc, char **argv)
+// Driver code
+int main(int argc, char *argv[])
 {
-    int data_size = DEFLEN, port = SERVER_UDP_PORT;
-    int i, j, sd, server_len;
-    char *pname, *host, rbuf[MAXLEN], sbuf[MAXLEN];
-    struct hostent *hp;
-    struct sockaddr_in server;
-    struct timeval start, end;
-    unsigned long address;
-    pname = argv[0];
-    argc--;
-    argv++;
-    if (argc > 0 && (strcmp(*argv, "-s") == 0))
+    // catch wrong input
+    if (argc != 3)
     {
-        if (--argc > 0 && (data_size = atoi(*++argv)))
-        {
-            argc--;
-            argv++;
-        }
-        else
-        {
-            fprintf(stderr,
-                    "Usage: %s [-s data_size] host [port]\n", pname);
-            exit(1);
-        }
+        printf("Please input IP address and port number\n");
+        return 0;
     }
-    if (argc > 0)
+    // ip_address : get ip from argv
+    // port : get port from argv
+    // buffer : data get from server
+    // message: data send to server
+    char *ip_address = argv[1];
+    char *port_number = argv[2];
+    int port = atoi(port_number);
+
+    int sockfd, n;
+    struct sockaddr_in servaddr;
+
+    // clear servaddr
+    bzero(&servaddr, sizeof(servaddr));
+    servaddr.sin_addr.s_addr = inet_addr(ip_address);
+    servaddr.sin_port = htons(port);
+    servaddr.sin_family = AF_INET;
+
+    // create datagram socket
+    sockfd = socket(AF_INET, SOCK_DGRAM, 0);
+
+    // connect to server
+    if (connect(sockfd, (struct sockaddr *)&servaddr, sizeof(servaddr)) < 0)
     {
-        host = *argv;
-        if (--argc > 0)
-            port = atoi(*++argv);
+        printf("\n Error : Connect Failed \n");
+        exit(0);
     }
 
-    else
+    do
     {
-        fprintf(stderr,
-                "Usage: %s [-s data_size] host [port]\n", pname);
-        exit(1);
-    }
+        user user1;
+        char buffer[100];
+        int g = 0;
+        printf("Input username: ");
+        g = scanf("%[^\n]", user1.username);
+        getchar();
+        printf("Input password: ");
+        g = scanf("%[^\n]", user1.password);
+        getchar();
+        sendto(sockfd, (struct user *)&user1, MAXLINE, 0, (struct sockaddr *)&servaddr, sizeof(servaddr));
 
-    if ((sd = socket(AF_INET, SOCK_DGRAM, 0)) == -1)
-    {
-        fprintf(stderr, "Can't create a socket\n");
-        exit(1);
-    }
-
-    bzero((char *)&server, sizeof(server));
-    server.sin_family = AF_INET;
-    server.sin_port = htons(port);
-    if ((hp = gethostbyname(host)) == NULL)
-    {
-        fprintf(stderr, "Can't get server's IP address\n");
-        exit(1);
-    }
-    bcopy(hp->h_addr, (char *)&server.sin_addr, hp->h_length);
-
-    if (data_size > MAXLEN)
-    {
-        fprintf(stderr, "Data is too big\n");
-        exit(1);
-    }
-    for (i = 0; i < data_size; i++)
-    {
-        j = (i < 26) ? i : i % 26;
-        sbuf[i] = 'a' + j;
-    }                           // construct data to send to the server
-    gettimeofday(&start, NULL); /* start delay measurement */
-    server_len = sizeof(server);
-    if (sendto(sd, sbuf, data_size, 0, (struct sockaddr *)&server, server_len) == -1)
-    {
-        fprintf(stderr, "sendto error\n");
-        exit(1);
-    }
-    if (recvfrom(sd, rbuf, MAXLEN, 0, (struct sockaddr *)&server, &server_len) < 0)
-    {
-        fprintf(stderr, "recvfrom error\n");
-        exit(1);
-    }
-    gettimeofday(&end, NULL); /* end delay measurement */
-    if (strncmp(sbuf, rbuf, data_size) != 0)
-        printf("Data is corrupted\n");
-    close(sd);
-    return (0);
+        // waiting for response
+        recvfrom(sockfd, buffer, sizeof(buffer), 0, (struct sockaddr *)NULL, NULL);
+        puts(buffer);
+        // recvfrom(sockfd, buffer, sizeof(buffer), 0, (struct sockaddr *)NULL, NULL);
+        // puts(buffer);
+        //while ((getchar()) != '\n');
+        puts("-------------------------");
+    } while (1);
+    // close the descriptor
+    close(sockfd);
+    return 0;
 }
