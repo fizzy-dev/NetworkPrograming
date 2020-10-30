@@ -25,31 +25,36 @@ int main(int argc, char *argv[])
         printf("Please input IP address and port number\n");
         return 0;
     }
-    // ip_address : get ip from argv
-    // port : get port from argv
-    // buffer : data get from server
-    // message: data send to server
+
+    // ip_address of server
+    // port number
     char *ip_address = argv[1];
     char *port_number = argv[2];
     int port = atoi(port_number);
+    int sock = 0;
+    struct sockaddr_in serv_addr;
 
-    int sockfd, n;
-    struct sockaddr_in servaddr;
-
-    // clear servaddr
-    bzero(&servaddr, sizeof(servaddr));
-    servaddr.sin_addr.s_addr = inet_addr(ip_address);
-    servaddr.sin_port = htons(port);
-    servaddr.sin_family = AF_INET;
-
-    // create datagram socket
-    sockfd = socket(AF_INET, SOCK_DGRAM, 0);
-
-    // connect to server
-    if (connect(sockfd, (struct sockaddr *)&servaddr, sizeof(servaddr)) < 0)
+    // Try catch false when connecting
+    if ((sock = socket(AF_INET, SOCK_STREAM, 0)) < 0)
     {
-        printf("\n Error : Connect Failed \n");
-        exit(0);
+        printf("\n Socket creation error \n");
+        return -1;
+    }
+
+    serv_addr.sin_family = AF_INET;
+    serv_addr.sin_port = htons(port);
+
+    // Convert IPv4 and IPv6 addresses from text to binary form
+    if (inet_pton(AF_INET, ip_address, &serv_addr.sin_addr) <= 0)
+    {
+        printf("\nInvalid address/ Address not supported \n");
+        return -1;
+    }
+
+    if (connect(sock, (struct sockaddr *)&serv_addr, sizeof(serv_addr)) < 0)
+    {
+        printf("\nConnection Failed \n");
+        return -1;
     }
 
     while (1)
@@ -58,6 +63,7 @@ int main(int argc, char *argv[])
         user user1;
         char buffer[100];
         char password[20];
+        char status[100];
         int g = 0;
         printf("Input username: ");
         g = scanf("%s", user1.username);
@@ -65,24 +71,24 @@ int main(int argc, char *argv[])
         printf("Input password: ");
         g = scanf("%s", user1.password);
         getchar();
-        sendto(sockfd, (struct user *)&user1, MAXLINE, 0, (struct sockaddr *)&servaddr, sizeof(servaddr));
+        send(sock, (struct user *)&user1, sizeof(user1), 0);
 
         // waiting for response
-        recvfrom(sockfd, buffer, sizeof(buffer), 0, (struct sockaddr *)NULL, NULL);
-        puts(buffer);
+        recv(sock, status, sizeof(status), 0);
+        puts(status);
         int i = 0;
         //neu nhap sai ma khau
-        while (strcmp(buffer, "Sai mat khau") == 0)
+        while (strcmp(status, "Sai mat khau") == 0)
         {
             i++;
             printf("Input password: ");
             g = scanf("%s", password);
             getchar();
 
-            sendto(sockfd, password, MAXLINE, 0, (struct sockaddr *)&servaddr, sizeof(servaddr));
+            send(sock, password, sizeof(password), 0);
 
-            recvfrom(sockfd, buffer, sizeof(buffer), 0, (struct sockaddr *)NULL, NULL);
-            puts(buffer);
+            recv(sock, status, sizeof(status), 0);
+            puts(status);
             if (i > 1)
             {
                 puts("Tai khoan cua ban bi tam khoa vi da nhap qua 3 lan!");
@@ -90,7 +96,7 @@ int main(int argc, char *argv[])
             }
         }
 
-        if (strcmp(buffer, "OK") == 0)
+        if (strcmp(status, "OK") == 0)
         {
             int input;
             char bye[100];
@@ -104,13 +110,13 @@ int main(int argc, char *argv[])
                     printf("Newpassword:");
                     scanf("%s", password);
                     getchar();
-                    sendto(sockfd, password, MAXLINE, 0, (struct sockaddr *)&servaddr, sizeof(servaddr));
+                    send(sock, password, sizeof(password), 0);
                     puts("------------------------------------------");
                     // waiting for response
-                    recvfrom(sockfd, buffer, sizeof(buffer), 0, (struct sockaddr *)NULL, NULL);
-                    puts(buffer);
-                    recvfrom(sockfd, buffer, sizeof(buffer), 0, (struct sockaddr *)NULL, NULL);
-                    puts(buffer);
+                    recv(sock, status, sizeof(status), 0);
+                    puts(status);
+                    recv(sock, status, sizeof(status), 0);
+                    puts(status);
                 }
                 if (input == 2)
                 {
@@ -131,6 +137,6 @@ int main(int argc, char *argv[])
         puts("-------------------------");
     }
     // close the descriptor
-    close(sockfd);
+    close(sock);
     return 0;
 }

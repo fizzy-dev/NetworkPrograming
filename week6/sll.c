@@ -2,6 +2,8 @@
 
 struct node *head = NULL;
 struct node *current = NULL;
+
+
 //hien thi danh sach
 void printList()
 {
@@ -36,7 +38,6 @@ void insertFirst(char username[], char password[], int status)
 //xoa phan tu dau tien
 struct node *deleteFirst()
 {
-
    //luu tham chieu toi first link
    struct node *tempLink = head;
 
@@ -69,16 +70,13 @@ int length()
 //tim mot link voi key da cho
 struct node *find(char *key)
 {
-
    //bat dau tim tu first link
    struct node *current = head;
-
    //neu list la trong
    if (head == NULL)
    {
       return NULL;
    }
-
    //duyet qua list
    while (strcmp(current->user.username, key) != 0)
    {
@@ -93,7 +91,6 @@ struct node *find(char *key)
          current = current->next;
       }
    }
-
    //neu tim thay du lieu, tra ve link hien tai
    return current;
 }
