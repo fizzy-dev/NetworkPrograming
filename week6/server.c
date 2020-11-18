@@ -9,6 +9,11 @@
 #include <ctype.h>
 #include <stdlib.h>
 #include "sll.h"
+//test
+#include <unistd.h>
+#include <pthread.h>
+#define MAX_THREADS 6
+
 #define MAXLINE 1000
 
 typedef struct user
@@ -17,26 +22,15 @@ typedef struct user
 	char password[20];
 } user;
 
+void *clientHandler(void *arg);
+
 // Driver code
 int main(int argc, char *argv[])
 {
-	FILE *fp;
 	node *findUser = NULL;
-	node *currentUser = NULL;
-	user user1;
-	char password[100];
 	char status[100];
 	int listenfd, len;
-	char only_string[100];
-	char only_number[100];
-	char filename[20] = "users.txt";
-	fp = fopen(filename, "r+");
-	if (fp == NULL)
-	{
-		printf("Mo file khong thanh cong");
-		exit(1);
-	}
-	insertFromFile(fp);
+
 	// catch wrong input
 
 	if (argc == 1)
@@ -51,7 +45,7 @@ int main(int argc, char *argv[])
 	// only_number : message send to client ( number only )
 	char *port_number = argv[1];
 	int port = atoi(port_number);
-	int server_fd, new_socket;
+	int server_fd;
 	struct sockaddr_in address;
 	int opt = 1;
 	int addrlen = sizeof(address);
@@ -84,11 +78,40 @@ int main(int argc, char *argv[])
 		perror("listen");
 		exit(EXIT_FAILURE);
 	}
-	if ((new_socket = accept(server_fd, (struct sockaddr *)&address, (socklen_t *)&addrlen)) < 0)
+
+	pthread_t tid;
+	while (1)
 	{
-		perror("accept");
-		exit(EXIT_FAILURE);
+		int new_socket;
+		if ((new_socket = accept(server_fd, (struct sockaddr *)&address, (socklen_t *)&addrlen)) < 0)
+		{
+			perror("accept");
+			exit(EXIT_FAILURE);
+		}
+		pthread_create(&tid, NULL, &clientHandler, (void *)new_socket);
 	}
+	//nhan data tu client
+}
+
+void *clientHandler(void *arg)
+{
+	FILE *fp;
+	int new_socket = (int)arg;
+	char filename[20] = "users.txt";
+	user user1;
+	char only_string[100];
+	char only_number[100];
+	char password[100];
+	node *currentUser = NULL;
+
+	fp = fopen(filename, "r+");
+	if (fp == NULL)
+	{
+		printf("Mo file khong thanh cong");
+		exit(1);
+	}
+
+	insertFromFile(fp);
 
 	while (1)
 	{
@@ -137,8 +160,8 @@ int main(int argc, char *argv[])
 			recv(new_socket, password, sizeof(password), 0);
 			puts(password);
 			user checkuser;
-			strcpy(checkuser.username,user1.username);
-			strcpy(checkuser.password,password);
+			strcpy(checkuser.username, user1.username);
+			strcpy(checkuser.password, password);
 			check = checkUser(checkuser, new_socket);
 			if (i > 1)
 			{
@@ -207,7 +230,6 @@ int checkUser(user user, int new_socket)
 
 int split(char *buffer, char *only_number, char *only_string)
 {
-
 	// Only number in buffer converts to string only_number
 	strcpy(only_string, buffer);
 	int k = 0;
