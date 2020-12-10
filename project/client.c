@@ -8,6 +8,17 @@
 #include <stdlib.h>
 #include <string.h>
 #define MAXLINE 1000
+#define MAX 100
+
+typedef struct 
+{
+    char username[MAX];
+    char password[MAX];
+    int status;
+    int number_act;
+    int number_sign;
+    char homepage[MAX];
+}DT;
 
 void main(int argc,char* argv[]){
     // catch wrong input
@@ -49,6 +60,27 @@ void main(int argc,char* argv[]){
 
     //-----------------connected to server------------------------------
 
+    while (1)
+    {
+        DT account;
+        char buffer[100];
+        char password[20];
+        char status[100];
+        int g = 0;
+        printf("Input username: ");
+        g = scanf("%s",account.username);
+        getchar();
+        printf("Input password: ");
+        g = scanf("%s", account.password);
+        getchar();
+        send(sock, (struct user *)&account, sizeof(account), 0);
+
+        // waiting for response
+        recv(sock, status, sizeof(status), 0);
+        puts(status);
+
+        puts("-------------------------");
+    }
 
 
 

@@ -229,7 +229,8 @@ int checkUser(user user, int new_socket)
 				fprintf(fp1, filename1);
 				fclose(fp1);
 				// mo lai file de doc
-				
+				fp1 = fopen("quang.txt", "r+");
+
 				send(new_socket, status, sizeof(status), 0);
 				return 3;
 			}
