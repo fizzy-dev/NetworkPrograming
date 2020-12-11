@@ -14,7 +14,6 @@ typedef struct
 {
     char username[MAX];
     char password[MAX];
-    int status;
     int number_act;
     int number_sign;
     char homepage[MAX];
@@ -68,6 +67,7 @@ void main(int argc, char *argv[])
     return;
 }
 
+//in menu khi chua dang nhap
 void menuLoginRegister(int sock)
 {
     int choose;
@@ -156,7 +156,81 @@ void loginUser(int sock)
         // waiting for response
         recv(sock, status, sizeof(status), 0);
         puts(status);
+        //Neu sai mat khau
+        if (strcmp(status, "wrongPassword") == 0)
+        {
+            /* code */
+        }
+        if (strcmp(status, "accountPassword") == 0)
+        {
+            /*code*/
+        }
+
+        //neu dang nhap thanh cong
+        if (strcmp(status, "ok") == 0)
+        {
+            DT currentUser = account;
+            loggedInMenu(sock, currentUser);
+        }
 
         puts("-------------------------");
     }
+}
+
+//in menu khi da dang nhap
+void loggedInMenu(int sock, DT currentUser)
+{
+    printf("hello %s\n", currentUser.username);
+    printf("1.Show all user\n2.Change password\n4.Create file\n5.Find file by name\n6.Find file by username\n7.Download file\n8.Help\n9.Quit\nYour choice:");
+    int choice;
+    char status[MAX];
+    scanf("%d", &choice);
+    switch (choice)
+    {
+    case 1:
+        break;
+    case 2:
+        break;
+    case 3:
+        break;
+    case 4:
+        strcpy(status, "userCreateFile");
+        send(sock, (char *)&status, sizeof(status), 0);
+        userCreateFile(sock, currentUser);
+        break;
+    case 5:
+        break;
+    case 6:
+        break;
+    case 7:
+        break;
+    case 8:
+        break;
+    case 9:
+        break;
+    default:
+        break;
+    }
+}
+
+//dinh dang file
+typedef struct Data
+{
+    char fileName[MAX];
+    char content[MAX];
+    DT sender;
+} Data;
+
+//nguoi dung gui file len sever
+void userCreateFile(int sock, DT currentUser)
+{
+    Data sentData;
+    printf("Input file name:\n");
+    scanf("%s", sentData.fileName);
+    getchar();
+    printf("Input content:\n");
+    scanf("%s", sentData.content);
+    getchar();
+    sentData.sender = currentUser;
+    send(sock, (struct Data *) & sentData, sizeof(sentData), 0);
 }

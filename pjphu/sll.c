@@ -220,26 +220,26 @@ void AddSort(LIST *l, DT a)
 		}
 	}
 }
-void Update(LIST *l, DT a)
-{
-	NODE *p = l->Head;
-	while (p != NULL)
-	{
-		if (strcmp(p->x.username, a.username) == 0)
-		{
-			strcpy(p->x.password, a.password);
-			p->x.status = a.status;
-		}
-		p = p->next;
-	}
-}
+// void Update(LIST *l, DT a)
+// {
+// 	NODE *p = l->Head;
+// 	while (p != NULL)
+// 	{
+// 		if (strcmp(p->x.username, a.username) == 0)
+// 		{
+// 			strcpy(p->x.password, a.password);
+// 			p->x.status = a.status;
+// 		}
+// 		p = p->next;
+// 	}
+// }
 
 void PrintList(LIST *l)
 {
 	NODE *p = l->Head;
 	while (p != NULL)
 	{
-		printf("%s | %d\n", p->x.username, p->x.status);
+		printf("%s |\n", p->x.username);
 		p = p->next;
 	}
 }

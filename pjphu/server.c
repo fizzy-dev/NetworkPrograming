@@ -9,12 +9,24 @@
 #include <ctype.h>
 #include <stdlib.h>
 #include "sll.h"
+//make directory
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
 //test
 #include <unistd.h>
 #include <pthread.h>
 #define MAX_THREADS 6
 
 #define MAXLINE 1000
+
+//dinh dang file
+typedef struct Data
+{
+	char fileName[MAX];
+	char content[MAX];
+	DT sender;
+} Data;
 
 //them user tu file vao linkedlist
 void insertFromFile(LIST *listUser, char *fileName);
@@ -104,8 +116,6 @@ void *clientHandler(void *arg)
 	if (strcmp(status, "signup") == 0)
 	{
 		int n = recv(new_socket, (struct Account *)&receivedAccount, sizeof(receivedAccount), 0);
-		// printf("%s\n", receivedAccount.username);
-		// printf("%s\n", receivedAccount.password);
 		findUser = FindByUsername(listUser, receivedAccount.username);
 		//Neu da ton tai username -> bao loi cho client
 		if (findUser != NULL)
@@ -113,16 +123,24 @@ void *clientHandler(void *arg)
 			strcpy(status, "accountExist");
 			send(new_socket, status, sizeof(status), 0);
 		}
-		//Neu username kha dung -> luu tai khoan vao database->send ok to client
+		//Neu username kha dung -> luu tai khoan vao database-> send ok to client+ tao thu muc tren server
 		else
 		{
-			receivedAccount.status=1;  //dang bi loi gan bien
-			puts(receivedAccount.username);
-			puts(receivedAccount.status);
-			AddTail(listUser,receivedAccount);
-			//PrintList(listUser);
+			AddTail(listUser, receivedAccount);
+			PrintList(listUser);
+			exportUserToFile(listUser, "users.txt");
 			strcpy(status, "ok");
 			send(new_socket, status, sizeof(status), 0);
+			//tao folder tren server cho moi user
+			char folderName[50];
+			strcpy(folderName, "./");
+			strcat(folderName, receivedAccount.username);
+			puts(folderName);
+			struct stat st = {0};
+			if (stat(folderName, &st) == -1)
+			{
+				mkdir(folderName, 0700);
+			}
 		}
 	}
 	//neu nguoi dung login
@@ -144,7 +162,7 @@ int checkUser(DT user, int new_socket, LIST *listUser)
 	finduser = FindByUsername(listUser, user.username);
 	if (finduser == NULL)
 	{
-		strcpy(status, "Tai khoan khong ton tai");
+		strcpy(status, "accountNotExist");
 		send(new_socket, status, sizeof(status), 0);
 		return 0;
 	}
@@ -152,24 +170,36 @@ int checkUser(DT user, int new_socket, LIST *listUser)
 	{
 		if (strcmp(finduser->x.password, user.password) != 0)
 		{
-			strcpy(status, "Sai mat khau");
+			strcpy(status, "wrongPassword");
 			send(new_socket, status, sizeof(status), 0);
 			return 1;
 		}
 		else
 		{
-			if (finduser->x.status == 0 || finduser->x.status == 2)
+			//dang nhap thanh cong
+			Data sentData;
+			FILE *fp;
+			strcpy(status, "ok");
+			send(new_socket, status, sizeof(status), 0);
+			//nhan request tu user
+			recv(new_socket, (char *)&status, sizeof(status), 0);
+			//neu user muon tao file
+			if (strcmp(status, "userCreateFile") == 0)
 			{
-				strcpy(status, "Account not ready");
-				send(new_socket, status, sizeof(status), 0);
-				return 2;
+				recv(new_socket,(struct Data*)&sentData,sizeof(sentData),0);
+				char path[MAX];
+				// ./username/filename.txt
+				strcpy(path,"./");
+				strcat(path,sentData.sender.username);
+				strcat(path,"/");
+				strcat(path,sentData.fileName);
+				strcat(path,".txt");
+				fp=fopen(path,"w");
+				puts(sentData.content);
+				fprintf(fp,"%s",sentData.content);
+				fclose(fp);
 			}
-			else
-			{ //ok
-				strcpy(status, "OK");
-				send(new_socket, status, sizeof(status), 0);
-				return 3;
-			}
+			return 3;
 		}
 	}
 }
@@ -184,7 +214,7 @@ void insertFromFile(LIST *listUser, char *fileName)
 		printf("Loi doc file");
 		exit(1);
 	}
-	while ((fscanf(fp, "%s %s %d", user.username, user.password, &user.status)) != EOF)
+	while ((fscanf(fp, "%s %s", user.username, user.password)) != EOF)
 	{
 		AddTail(listUser, user);
 	}
@@ -201,14 +231,15 @@ void exportUserToFile(LIST *l, char *fileName)
 		printf("Loi doc file");
 		exit(1);
 	}
-	currentUser=l->Head;
-	if(currentUser==NULL){
+	currentUser = l->Head;
+	if (currentUser == NULL)
+	{
 		return;
 	}
-	while (currentUser==NULL)
+	while (currentUser != NULL)
 	{
-		fprintf(fp, "%s %s %d\n", currentUser->x.username,currentUser->x.password,currentUser->x.status);
-		currentUser=currentUser->next;
+		fprintf(fp, "%s %s\n", currentUser->x.username, currentUser->x.password);
+		currentUser = currentUser->next;
 	}
 	fclose(fp);
 }
