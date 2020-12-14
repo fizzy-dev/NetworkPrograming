@@ -181,7 +181,7 @@ void loginUser(int sock)
 void loggedInMenu(int sock, DT currentUser)
 {
     printf("hello %s\n", currentUser.username);
-    printf("1.Show all user\n2.Change password\n4.Create file\n5.Find file by name\n6.Find file by username\n7.Download file\n8.Help\n9.Quit\nYour choice:");
+    printf("1.Show all user\n2.Change password\n4.Create text file\n5.Find file by name\n6.Find file by username\n7.Download file\n8.Help\n9.Upload from local\n10.Quit\nYour choice:");
     int choice;
     char status[MAX];
     scanf("%d", &choice);
@@ -207,6 +207,9 @@ void loggedInMenu(int sock, DT currentUser)
     case 8:
         break;
     case 9:
+        strcpy(status, "userUploadFile");
+        send(sock, status, sizeof(status),0);
+        uploadExistFile(sock, currentUser);
         break;
     default:
         break;
@@ -232,5 +235,52 @@ void userCreateFile(int sock, DT currentUser)
     scanf("%s", sentData.content);
     getchar();
     sentData.sender = currentUser;
-    send(sock, (struct Data *) & sentData, sizeof(sentData), 0);
+    send(sock, (struct Data *)&sentData, sizeof(sentData), 0);
+}
+
+void uploadExistFile(int sock, DT currentUser)
+{
+    char filePath[MAX];
+    int n = 0;
+    int siz = 0;
+    FILE *picture;
+    char buf[50];
+    char *s = "";
+    printf("Nhap duong dan den file:\n");
+    scanf("%s", filePath);
+    getchar();
+    //gui file name len server
+    send(sock, filePath, sizeof(filePath), 0);
+    puts("Getting image size");
+    picture = fopen(filePath, "r");
+    if (picture == NULL)
+    {
+        puts("Mo file khong thanh cong\n");
+    }
+    fseek(picture, 0, SEEK_END);
+    siz = ftell(picture);
+    printf("%d", siz);
+
+    puts("Sending picture size to the server\n");
+    sprintf(buf, "%d", siz);
+    if ((n = send(sock, buf, sizeof(buf), 0)) < 0)
+    {
+        puts("loi 1");
+    }
+
+    char Sbuf[siz];
+    puts("Sending the picture as byte array\n");
+    fseek(picture, 0, SEEK_END);
+    siz = ftell(picture);
+    fseek(picture, 0, SEEK_SET); //Going to the beginning of the file
+
+    while (!feof(picture))
+    {
+        fread(Sbuf, sizeof(char), sizeof(Sbuf), picture);
+        if ((n = send(sock, Sbuf, sizeof(Sbuf), 0)) < 0)
+        {
+            puts("loi2");
+        }
+        memset(Sbuf, 0, sizeof(Sbuf));
+    }
 }

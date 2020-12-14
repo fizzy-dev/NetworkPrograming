@@ -183,21 +183,66 @@ int checkUser(DT user, int new_socket, LIST *listUser)
 			send(new_socket, status, sizeof(status), 0);
 			//nhan request tu user
 			recv(new_socket, (char *)&status, sizeof(status), 0);
+
 			//neu user muon tao file
 			if (strcmp(status, "userCreateFile") == 0)
 			{
-				recv(new_socket,(struct Data*)&sentData,sizeof(sentData),0);
+				recv(new_socket, (struct Data *)&sentData, sizeof(sentData), 0);
 				char path[MAX];
 				// ./username/filename.txt
-				strcpy(path,"./");
-				strcat(path,sentData.sender.username);
-				strcat(path,"/");
-				strcat(path,sentData.fileName);
-				strcat(path,".txt");
-				fp=fopen(path,"w");
+				strcpy(path, "./");
+				strcat(path, sentData.sender.username);
+				strcat(path, "/");
+				strcat(path, sentData.fileName);
+				strcat(path, ".txt");
+				fp = fopen(path, "w");
 				puts(sentData.content);
-				fprintf(fp,"%s",sentData.content);
+				fprintf(fp, "%s", sentData.content);
 				fclose(fp);
+			}
+
+			//chuc nang uploadfile
+			if (strcmp(status, "userUploadFile") == 0)
+			{
+				const char client_filepath[MAX];
+				//nhan filepath tu client
+				recv(new_socket, client_filepath, sizeof(client_filepath), 0);
+				puts(client_filepath);
+				puts("---------------------------");
+				int len;
+                const char ch = '/';
+                char *uploadFileName;
+                uploadFileName = strrchr(client_filepath, ch);
+				printf("%s", uploadFileName);
+				int n = 0;
+				puts("Reading image size");
+				char buf[50];
+				int siz = 0;
+				if ((n = recv(new_socket, buf, sizeof(buf), 0) < 0))
+				{
+					puts("loi");
+				}
+				siz = atoi(buf);
+				printf("%d", siz); // 880 output
+				char Rbuffer[siz];
+				puts("Reading image byte array");
+				n = 0;
+				if ((n = recv(new_socket, Rbuffer, sizeof(Rbuffer), 0)) < 0)
+				{
+					puts("loi 2");
+				}
+				puts("Converting byte array to image");
+				FILE *image;
+				char filePath[MAX];
+				// ./username/filename
+				strcpy(filePath, "./");
+				strcat(filePath, finduser->x.username);
+				//strcat(filePath, "/");
+				strcat(filePath, uploadFileName);
+				image = fopen(filePath, "w");
+				fwrite(Rbuffer, sizeof(char), sizeof(Rbuffer), image);
+				fclose(image);
+				puts("done");
 			}
 			return 3;
 		}
