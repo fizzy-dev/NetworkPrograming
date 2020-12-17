@@ -19,6 +19,13 @@ typedef struct
     char homepage[MAX];
 } DT;
 
+typedef struct Data
+{
+    char fileName[MAX];
+    char content[MAX];
+    DT sender;
+} Data;
+
 void main(int argc, char *argv[])
 {
     // catch wrong input
@@ -59,8 +66,10 @@ void main(int argc, char *argv[])
     }
 
     //-----------------connected to server------------------------------
-
-    menuLoginRegister(sock);
+    while (1)
+    {
+        menuLoginRegister(sock);
+    }
 
     //-----------------disconnect to server----------------------------------
     close(sock);
@@ -97,119 +106,145 @@ void menuLoginRegister(int sock)
 
 void registerUser(int sock)
 {
-    while (1)
+    // while (1)
+    // {
+    DT account;
+    char buffer[MAX];
+    char confirmPassword[MAX];
+    char status[MAX];
+    int g = 0;
+    printf("Input username: ");
+    g = scanf("%s", account.username);
+    getchar();
+    printf("Input password: ");
+    g = scanf("%s", account.password);
+    getchar();
+    printf("Confirm password: ");
+    g = scanf("%s", confirmPassword);
+    getchar();
+    if (strcmp(account.password, confirmPassword) != 0)
     {
-        DT account;
-        char buffer[MAX];
-        char confirmPassword[MAX];
-        char status[MAX];
-        int g = 0;
-        printf("Input username: ");
-        g = scanf("%s", account.username);
-        getchar();
-        printf("Input password: ");
-        g = scanf("%s", account.password);
-        getchar();
-        printf("Confirm password: ");
-        g = scanf("%s", confirmPassword);
-        getchar();
-        if (strcmp(account.password, confirmPassword) != 0)
+        printf("Mat khau khong khop\n");
+        //continue;
+        registerUser(sock);
+    }
+    else
+    {
+        //Gui tai khoan muon dang ky len server
+        send(sock, (struct DT *)&account, sizeof(account), 0);
+        //nhan thong bao tu server
+        recv(sock, status, sizeof(status), 0);
+        if (strcmp(status, "ok") == 0)
         {
-            printf("Mat khau khong khop\n");
-            continue;
+            puts("dk thanh cong");
+            //break;
+            menuLoginRegister(sock);
         }
-        else
+        if (strcmp(status, "accountExist") == 0)
         {
-            //Gui tai khoan muon dang ky len server
-            send(sock, (struct DT *)&account, sizeof(account), 0);
-            //nhan thong bao tu server
-            recv(sock, status, sizeof(status), 0);
-            if (strcmp(status, "ok") == 0)
-            {
-                puts("dk thanh cong");
-            }
-            if (strcmp(status, "accountExist") == 0)
-            {
-                puts(status);
-            }
+            puts(status);
+            //break;
+            menuLoginRegister(sock);
         }
     }
 }
 
 void loginUser(int sock)
 {
-    while (1)
+    // while (1)
+    // {
+    DT account;
+    char buffer[100];
+    char password[20];
+    char status[100];
+    int g = 0;
+    printf("Input username: ");
+    g = scanf("%s", account.username);
+    getchar();
+    printf("Input password: ");
+    g = scanf("%s", account.password);
+    getchar();
+    send(sock, (struct DT *)&account, sizeof(account), 0);
+
+    // waiting for response
+    recv(sock, status, sizeof(status), 0);
+    puts(status);
+    //Neu sai mat khau
+    if (strcmp(status, "wrongPassword") == 0)
     {
-        DT account;
-        char buffer[100];
-        char password[20];
-        char status[100];
-        int g = 0;
-        printf("Input username: ");
-        g = scanf("%s", account.username);
-        getchar();
-        printf("Input password: ");
-        g = scanf("%s", account.password);
-        getchar();
-        send(sock, (struct DT *)&account, sizeof(account), 0);
+        /* code */
+    }
+    if (strcmp(status, "accountPassword") == 0)
+    {
+        /*code*/
+    }
 
-        // waiting for response
-        recv(sock, status, sizeof(status), 0);
-        puts(status);
-        //Neu sai mat khau
-        if (strcmp(status, "wrongPassword") == 0)
+    //neu dang nhap thanh cong
+    if (strcmp(status, "ok") == 0)
+    {
+        DT currentUser = account;
+        while (1)
         {
-            /* code */
-        }
-        if (strcmp(status, "accountPassword") == 0)
-        {
-            /*code*/
-        }
-
-        //neu dang nhap thanh cong
-        if (strcmp(status, "ok") == 0)
-        {
-            DT currentUser = account;
             loggedInMenu(sock, currentUser);
         }
-
-        puts("-------------------------");
     }
+
+    puts("-------------------------");
+    //}
 }
 
 //in menu khi da dang nhap
 void loggedInMenu(int sock, DT currentUser)
 {
     printf("hello %s\n", currentUser.username);
-    printf("1.Show all user\n2.Change password\n4.Create text file\n5.Find file by name\n6.Find file by username\n7.Download file\n8.Help\n9.Upload from local\n10.Quit\nYour choice:");
+    printf("1.Show all user\n2.Change password\n3.Find file by name\n4.Find file by username\n5.Copy file from other user\n6.Create text file\n7.Upload file from local\n8.Download file\n9.Help\n10.Log out\nYour choice:");
     int choice;
     char status[MAX];
     scanf("%d", &choice);
     switch (choice)
     {
     case 1:
+        strcpy(status, "showAllUsers");
         break;
     case 2:
+        strcpy(status, "changePassword");
+        send(sock, (char *)&status, sizeof(status), 0);
         break;
     case 3:
+        strcpy(status, "findByFileName");
+        send(sock, (char *)&status, sizeof(status), 0);
         break;
     case 4:
+        strcpy(status, "findByUserName");
+        send(sock, (char *)&status, sizeof(status), 0);
+        break;
+    case 5:
+        strcpy(status, "copyFromOther");
+        send(sock, (char *)&status, sizeof(status), 0);
+        break;
+    case 6:
         strcpy(status, "userCreateFile");
         send(sock, (char *)&status, sizeof(status), 0);
         userCreateFile(sock, currentUser);
-        break;
-    case 5:
-        break;
-    case 6:
+        loggedInMenu(sock, currentUser);
         break;
     case 7:
+        strcpy(status, "userUploadFile");
+        send(sock, status, sizeof(status), 0);
+        uploadExistFile(sock, currentUser);
+        loggedInMenu(sock, currentUser);
         break;
     case 8:
+        strcpy(status, "userCreateFile");
+        send(sock, (char *)&status, sizeof(status), 0);
         break;
     case 9:
-        strcpy(status, "userUploadFile");
-        send(sock, status, sizeof(status),0);
-        uploadExistFile(sock, currentUser);
+        strcpy(status, "downloadFile");
+        send(sock, (char *)&status, sizeof(status), 0);
+        break;
+    case 10:
+        strcpy(status, "logout");
+        send(sock, (char *)&status, sizeof(status), 0);
         break;
     default:
         break;
@@ -217,12 +252,12 @@ void loggedInMenu(int sock, DT currentUser)
 }
 
 //dinh dang file
-typedef struct Data
-{
-    char fileName[MAX];
-    char content[MAX];
-    DT sender;
-} Data;
+// typedef struct Data
+// {
+//     char fileName[MAX];
+//     char content[MAX];
+//     DT sender;
+// } Data;
 
 //nguoi dung gui file len sever
 void userCreateFile(int sock, DT currentUser)
@@ -232,12 +267,15 @@ void userCreateFile(int sock, DT currentUser)
     scanf("%s", sentData.fileName);
     getchar();
     printf("Input content:\n");
-    scanf("%s", sentData.content);
-    getchar();
-    sentData.sender = currentUser;
+    fgets(sentData.content, sizeof(sentData.content), stdin);
+    //scanf("%s", sentData.content);
+    //getchar();
+    strcpy(sentData.sender.username, currentUser.username);
+    //sentData.sender = currentUser;
     send(sock, (struct Data *)&sentData, sizeof(sentData), 0);
 }
 
+//upload from local
 void uploadExistFile(int sock, DT currentUser)
 {
     char filePath[MAX];
