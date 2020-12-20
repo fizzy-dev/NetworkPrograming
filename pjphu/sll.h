@@ -41,3 +41,4 @@ void DeletePos(LIST *l,int x);
 LIST *SeverseLIST(LIST *l);
 void AddSort(LIST *l,DT a);
 void PrintList(LIST *l);
+int ListSize(LIST *l);

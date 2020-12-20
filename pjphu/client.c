@@ -205,10 +205,15 @@ void loggedInMenu(int sock, DT currentUser)
     {
     case 1:
         strcpy(status, "showAllUsers");
+        send(sock, (char *)&status, sizeof(status), 0);
+        showAllUsers(sock);
+        loggedInMenu(sock, currentUser);
         break;
     case 2:
         strcpy(status, "changePassword");
         send(sock, (char *)&status, sizeof(status), 0);
+        changePassword(sock, currentUser);
+        loggedInMenu(sock, currentUser);
         break;
     case 3:
         strcpy(status, "findByFileName");
@@ -320,5 +325,52 @@ void uploadExistFile(int sock, DT currentUser)
             puts("loi2");
         }
         memset(Sbuf, 0, sizeof(Sbuf));
+    }
+}
+
+void showAllUsers(int sock)
+{
+    char username[MAX];
+    int size;
+    char buf[MAX];
+    recv(sock, buf, sizeof(buf), 0);
+    size = atoi(buf);
+    printf("Co tat ca %d nguoi dung\n", size);
+    int i;
+    for (i = 0; i < size; i++)
+    {
+        recv(sock, username, sizeof(username), 0);
+        puts(username);
+    }
+}
+
+void changePassword(int sock, DT currentUser)
+{
+    char currentPassword[MAX];
+    char status[MAX];
+    int flag=0;
+    for (int i = 0; i < 3; i++)
+    {
+        puts("Input current password:");
+        scanf("%s", currentPassword);
+        //gui mat khau cu len server
+        send(sock, currentPassword, sizeof(currentPassword), 0);
+        //server tra ket qua so sanh voi mat khau cu
+        recv(sock, status, sizeof(status), 0);
+        if (strcmp(status, "incorrect") == 0)
+        {
+            puts("sai mk");
+            flag++;
+            continue;
+        }
+        if(strcmp(status,"correct")==0){
+            char newPassword[MAX];
+            puts("Input new password:");
+            scanf("%s",newPassword);
+            getchar();
+            send(sock,newPassword,sizeof(newPassword),0);
+            puts("doi mk thanh cong");
+            break;
+        }
     }
 }

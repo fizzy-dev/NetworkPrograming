@@ -7,6 +7,27 @@ int isEmpty(LIST *l)
 {
 	return (l->Head == NULL);
 }
+
+int ListSize(LIST *l)
+{
+	int size = 0;
+	NODE*p=l->Head;
+	if (l->Head != NULL)
+	{
+		do
+		{
+			size = size + 1;
+			p = p->next;
+		} while (p != NULL);
+	}
+	else
+	{
+		size = 0;
+		return size;
+	}
+	return size;
+}
+
 NODE *CreatNODE(DT a)
 {
 	NODE *p = (NODE *)malloc(sizeof(NODE));

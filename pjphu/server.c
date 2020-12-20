@@ -109,6 +109,8 @@ void *clientHandler(void *arg)
 
 	LIST *listUser = (LIST *)malloc(sizeof(LIST));
 	insertFromFile(listUser, "users.txt");
+	puts(listUser->Head->x.username);
+	puts("after insert");
 	//PrintList(listUser);
 
 	while (1)
@@ -162,6 +164,8 @@ void *clientHandler(void *arg)
 
 int checkUser(DT user, int new_socket, LIST *listUser)
 {
+	puts(listUser->Head->x.username);
+	puts("after login");
 	char status[100];
 	struct NODE *finduser = NULL;
 	finduser = FindByUsername(listUser, user.username);
@@ -192,11 +196,73 @@ int checkUser(DT user, int new_socket, LIST *listUser)
 			{
 				//nhan request tu user
 				recv(new_socket, (char *)&status, sizeof(status), 0);
+				//user muon show user
+				if (strcmp(status, "showAllUsers") == 0)
+				{
+					puts("list size :");
+					int size = 0;
+					//lay kich co linkedlist
+					size = ListSize(listUser);
+					//gui so user cho client
+					char buf[MAX];
+					sprintf(buf, "%d", size);
+					send(new_socket, buf, sizeof(buf), 0);
+					//gui tung username ve cho client
+					int i = 0;
+					NODE *k = listUser->Head;
+					for (i = 0; i < size; i++)
+					{
+						send(new_socket, k->x.username, sizeof(k->x.username), 0);
+						puts(k->x.username);
+						k = k->next;
+					}
+					puts("done!");
+					continue;
+				}
+
+				if (strcmp(status, "changePassword") == 0)
+				{
+					int flag=0;
+					char status[MAX];
+					char currentPassword[MAX];
+					for (int i = 0; i < 3; i++)
+					{
+						recv(new_socket, currentPassword, sizeof(currentPassword), 0);
+						puts(currentPassword);
+						if (strcmp(currentPassword, finduser->x.password) == 0)
+						{
+							strcpy(status,"correct");
+							puts(status);
+							send(new_socket,status,sizeof(status),0);
+							break;
+						}
+						else
+						{
+							strcpy(status,"incorrect");
+							puts(status);
+							send(new_socket,status,sizeof(status),0);
+							flag++;
+							continue;
+						}
+					}
+					//neu nhap sai mk qua 3 lan
+					if(flag>=3){
+						continue;
+					}else{ //doi mk cho user
+						char newPassword[MAX];
+						recv(new_socket,newPassword,sizeof(newPassword),0);
+						puts(newPassword);
+						strcpy(finduser->x.password,newPassword);
+						exportUserToFile(listUser,"users.txt");
+						puts("Change password success");
+					}
+					continue;
+				}
 				//neu user muon tao file
 				if (strcmp(status, "userCreateFile") == 0)
 				{
 					recv(new_socket, (struct Data *)&sentData, sizeof(sentData), 0);
-					printf("data content :%s\n",sentData.content);
+					printf("data content :%s\n", sentData.content);
 					char path[MAX];
 					// ./username/filename.txt
 					strcpy(path, "./");
