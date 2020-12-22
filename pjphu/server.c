@@ -1,6 +1,7 @@
 // server program for udp connection
 #include <stdio.h>
 #include <strings.h>
+#include <string.h>
 #include <sys/types.h>
 #include <arpa/inet.h>
 #include <sys/socket.h>
@@ -16,6 +17,14 @@
 //test
 #include <unistd.h>
 #include <pthread.h>
+//list directory
+#include <errno.h>
+#include <dirent.h>
+//copy file
+#include <fcntl.h>
+#include <unistd.h>
+#include <errno.h>
+
 #define MAX_THREADS 6
 
 #define MAXLINE 1000
@@ -196,7 +205,13 @@ int checkUser(DT user, int new_socket, LIST *listUser)
 			{
 				//nhan request tu user
 				recv(new_socket, (char *)&status, sizeof(status), 0);
-				//user muon show user
+				//0.show your file
+				if (strcmp(status, "showYourFile") == 0)
+				{
+					findFileByUserName(new_socket, listUser, finduser->x.username);
+					continue;
+				}
+				//1.user muon show user
 				if (strcmp(status, "showAllUsers") == 0)
 				{
 					puts("list size :");
@@ -209,6 +224,7 @@ int checkUser(DT user, int new_socket, LIST *listUser)
 					send(new_socket, buf, sizeof(buf), 0);
 					//gui tung username ve cho client
 					int i = 0;
+					//printf("%d\n",size);
 					NODE *k = listUser->Head;
 					for (i = 0; i < size; i++)
 					{
@@ -219,10 +235,10 @@ int checkUser(DT user, int new_socket, LIST *listUser)
 					puts("done!");
 					continue;
 				}
-
+				//2.user muon doi mat khau
 				if (strcmp(status, "changePassword") == 0)
 				{
-					int flag=0;
+					int flag = 0;
 					char status[MAX];
 					char currentPassword[MAX];
 					for (int i = 0; i < 3; i++)
@@ -231,34 +247,110 @@ int checkUser(DT user, int new_socket, LIST *listUser)
 						puts(currentPassword);
 						if (strcmp(currentPassword, finduser->x.password) == 0)
 						{
-							strcpy(status,"correct");
+							strcpy(status, "correct");
 							puts(status);
-							send(new_socket,status,sizeof(status),0);
+							send(new_socket, status, sizeof(status), 0);
 							break;
 						}
 						else
 						{
-							strcpy(status,"incorrect");
+							strcpy(status, "incorrect");
 							puts(status);
-							send(new_socket,status,sizeof(status),0);
+							send(new_socket, status, sizeof(status), 0);
 							flag++;
 							continue;
 						}
 					}
 					//neu nhap sai mk qua 3 lan
-					if(flag>=3){
+					if (flag >= 3)
+					{
 						continue;
-					}else{ //doi mk cho user
+					}
+					else
+					{ //doi mk cho user
 						char newPassword[MAX];
-						recv(new_socket,newPassword,sizeof(newPassword),0);
+						recv(new_socket, newPassword, sizeof(newPassword), 0);
 						puts(newPassword);
-						strcpy(finduser->x.password,newPassword);
-						exportUserToFile(listUser,"users.txt");
+						strcpy(finduser->x.password, newPassword);
+						exportUserToFile(listUser, "users.txt");
 						puts("Change password success");
 					}
 					continue;
 				}
-				//neu user muon tao file
+				//3.Find file by key
+				if (strcmp(status, "findByFileName") == 0)
+				{
+					char keyword[MAX];
+					recv(new_socket, keyword, sizeof(keyword), 0);
+					puts(keyword);
+					findFileByFileName(listUser, keyword, new_socket);
+					continue;
+				}
+				//4.Find file by username
+				if (strcmp(status, "findByUserName") == 0)
+				{
+					char keyword[MAX];
+					recv(new_socket, keyword, sizeof(keyword), 0);
+					puts(keyword);
+					findFileByUserName(new_socket, listUser, keyword);
+					continue;
+				}
+				//5.Copy file from the other user
+				if (strcmp(status, "copyFromOtherUser") == 0)
+				{
+					char user[MAX];
+					char file[MAX];
+					char status[MAX];
+					recv(new_socket, user, sizeof(user), 0);
+					NODE *p = FindByUsername(listUser, user);
+					if (p == NULL)
+					{
+						strcpy(status, "notExist");
+						send(new_socket, status, sizeof(status), 0);
+						continue;
+					}
+					else
+					{
+						strcpy(status, "ok");
+						send(new_socket, status, sizeof(status), 0);
+
+						recv(new_socket, file, sizeof(file), 0);
+						int check = checkFileExist(user, file);
+						// puts(file);
+						// printf("%d\n", check);
+						if (check == 0)
+						{
+							strcpy(status, "fileNotExist");
+							send(new_socket, status, sizeof(status), 0);
+							puts(status);
+							continue;
+						}
+						if (check == 1)
+						{ //ton tai file
+							char from[MAX];
+							char to[MAX];
+							//./username/filename
+							strcpy(to, "");
+							strcat(to, "./");
+							strcat(to, finduser->x.username);
+							strcat(to, "/");
+							strcat(to, file);
+							// ./username/filename
+							strcpy(from, "");
+							strcat(from, "./");
+							strcat(from, user);
+							strcat(from, "/");
+							strcat(from, file);
+							copy(to, from);
+							strcpy(status, "copyOk");
+							send(new_socket, status, sizeof(status), 0);
+							puts(status);
+							continue;
+						}
+					}
+					continue;
+				}
+				//6.neu user muon tao file
 				if (strcmp(status, "userCreateFile") == 0)
 				{
 					recv(new_socket, (struct Data *)&sentData, sizeof(sentData), 0);
@@ -276,7 +368,7 @@ int checkUser(DT user, int new_socket, LIST *listUser)
 					fclose(fp);
 					continue;
 				}
-				//chuc nang uploadfile
+				//7.chuc nang uploadfile
 				if (strcmp(status, "userUploadFile") == 0)
 				{
 					const char client_filepath[MAX];
@@ -301,10 +393,27 @@ int checkUser(DT user, int new_socket, LIST *listUser)
 					char Rbuffer[siz];
 					puts("Reading image byte array");
 					n = 0;
-					if ((n = recv(new_socket, Rbuffer, sizeof(Rbuffer), 0)) < 0)
+					// if ((n = recv(new_socket, Rbuffer, sizeof(Rbuffer), 0)) < 0)
+					// {
+					// 	puts("loi 2");
+					// }
+					// puts("Converting byte array to image");
+					// FILE *image;
+					// char filePath[MAX];
+					// // ./username/filename
+					// strcpy(filePath, "./");
+					// strcat(filePath, finduser->x.username);
+					// //strcat(filePath, "/");
+					// strcat(filePath, uploadFileName);
+					// image = fopen(filePath, "w");
+					// fwrite(Rbuffer, sizeof(char), sizeof(Rbuffer), image);
+					// fclose(image);
+
+					if ((n = recv(new_socket, Rbuffer, siz, 0)) < 0)
 					{
-						puts("loi 2");
+						puts("loi");
 					}
+
 					puts("Converting byte array to image");
 					FILE *image;
 					char filePath[MAX];
@@ -314,9 +423,60 @@ int checkUser(DT user, int new_socket, LIST *listUser)
 					//strcat(filePath, "/");
 					strcat(filePath, uploadFileName);
 					image = fopen(filePath, "w");
-					fwrite(Rbuffer, sizeof(char), sizeof(Rbuffer), image);
+					fwrite(Rbuffer, sizeof(char), siz, image);
 					fclose(image);
+
 					puts("done");
+					continue;
+				}
+				//8.Download file
+				if (strcmp(status, "downloadFile") == 0)
+				{
+					char user[MAX];
+					char file[MAX];
+					char status[MAX];
+					recv(new_socket, user, sizeof(user), 0);
+					NODE *p = FindByUsername(listUser, user);
+					if (p == NULL)
+					{
+						strcpy(status, "notExist");
+						send(new_socket, status, sizeof(status), 0);
+						continue;
+					}
+					else
+					{
+						strcpy(status, "ok");
+						send(new_socket, status, sizeof(status), 0);
+
+						recv(new_socket, file, sizeof(file), 0);
+						int check = checkFileExist(user, file);
+						// puts(file);
+						// printf("%d\n", check);
+						if (check == 0)
+						{
+							strcpy(status, "fileNotExist");
+							send(new_socket, status, sizeof(status), 0);
+							puts(status);
+							continue;
+						}
+						if (check == 1)
+						{ //ton tai file
+							char from[MAX];
+							// ./username/filename
+							strcpy(from, "");
+							strcat(from, "./");
+							strcat(from, user);
+							strcat(from, "/");
+							strcat(from, file);
+							puts(from);
+							strcpy(status, "downloadOk");
+							send(new_socket, status, sizeof(status), 0);
+							puts(status);
+							// send file to user
+							sendFileToClient(new_socket, from, file);
+							continue;
+						}
+					}
 					continue;
 				}
 			}
@@ -375,4 +535,262 @@ void exportUserToFile(LIST *l, char *fileName)
 		currentUser = currentUser->next;
 	}
 	fclose(fp);
+}
+
+int checkFileExist(char *user, char *filename)
+{
+	char path[MAX];
+	// ./username
+	strcpy(path, "");
+	strcat(path, "./");
+	strcat(path, user);
+	DIR *dirp;
+	struct dirent *dp;
+	dirp = opendir(path);
+	if (!dirp)
+	{
+		perror("opendir()");
+		exit(1);
+	}
+	while (dp = readdir(dirp))
+	{
+		if (strcmp(dp->d_name, filename) == 0)
+		{
+			return 1;
+		}
+	}
+	return 0; //
+}
+//ls
+void findFileByFileName(LIST *l, char *keyword, int new_socket)
+{
+	NODE *p = l->Head;
+	NODE *k = l->Head;
+	int numberofFile = 0;
+	int size = ListSize(l); //get number of user
+	printf("%d\n", size);
+	for (int i = 0; i < size; i++)
+	{
+		char path[MAX];
+		strcpy(path, "");
+
+		DIR *dirp;
+		// ./username
+		strcat(path, "./");
+		strcat(path, p->x.username);
+
+		struct dirent *dp;
+		dirp = opendir(path); //filepath
+		strcpy(path, "");	  //resetpath
+		if (!dirp)
+		{
+			perror("opendir()");
+			exit(1);
+		}
+		while ((dp = readdir(dirp)))
+		{
+			char *ptr = strchr(dp->d_name, '.');
+			*ptr = 0;
+			if (strcmp(dp->d_name, keyword) == 0)
+			{
+				puts(dp->d_name);
+				numberofFile++;
+			}
+		}
+		if (errno)
+		{
+			perror("readdir()");
+			exit(1);
+		}
+		p = p->next;
+	}
+	printf("%d\n", numberofFile);
+	char buf[MAX];
+	sprintf(buf, "%d", numberofFile);
+	send(new_socket, buf, sizeof(buf), 0); //send numberoffile to client
+
+	for (int i = 0; i < size; i++) //send file name+user to client
+	{
+		char path[MAX];
+		strcpy(path, "");
+
+		DIR *dirp;
+		// ./username
+		strcat(path, "./");
+		strcat(path, k->x.username);
+
+		struct dirent *dp;
+		dirp = opendir(path); //filepath
+		strcpy(path, "");	  //resetpath
+		if (!dirp)
+		{
+			perror("opendir()");
+			exit(1);
+		}
+		while ((dp = readdir(dirp)))
+		{
+			char file[MAX];
+			char *ptr = strchr(dp->d_name, '.');
+			//users | []
+			strcpy(file, dp->d_name);
+			strcat(file, " | From user: ");
+			strcat(file, k->x.username);
+
+			*ptr = 0;
+			if (strcmp(dp->d_name, keyword) == 0)
+			{
+				send(new_socket, file, sizeof(file), 0);
+			}
+		}
+		if (errno)
+		{
+			perror("readdir()");
+			exit(1);
+		}
+		k = k->next;
+	}
+	puts("done");
+}
+
+void findFileByUserName(int new_socket, LIST *l, char *keyword)
+{
+	NODE *p = FindByUsername(l, keyword);
+	char status[MAX];
+	if (p == NULL)
+	{
+		strcpy(status, "AccountNotExist");
+		send(new_socket, status, sizeof(status), 0);
+		return;
+	}
+	int numberofFile = 0;
+	char path[MAX];
+	strcpy(path, "");
+	DIR *dirp;
+	// ./username
+	strcat(path, "./");
+	strcat(path, keyword);
+	struct dirent *dp1;
+	struct dirent *dp2;
+	dirp = opendir(path); //filepath
+	if (!dirp)
+	{
+		perror("opendir()");
+		exit(1);
+	}
+	while ((dp1 = readdir(dirp)))
+	{
+		numberofFile++;
+	}
+
+	char buf[MAX];
+	sprintf(buf, "%d", numberofFile);
+	send(new_socket, buf, sizeof(buf), 0); //send numberoffile to client
+
+	DIR *dirp1;
+	dirp1 = opendir(path);
+	while ((dp2 = readdir(dirp1)))
+	{
+		puts(dp2->d_name);
+		strcpy(buf, dp2->d_name);
+		send(new_socket, buf, sizeof(buf), 0);
+	}
+	if (errno)
+	{
+		perror("readdir()");
+		exit(1);
+	}
+	puts("done!");
+}
+
+int copy(const char *to, const char *from)
+{
+	int fd_to, fd_from;
+	char buf[4096];
+	ssize_t nread;
+	int saved_errno;
+
+	fd_from = open(from, O_RDONLY);
+	if (fd_from < 0)
+		return -1;
+
+	fd_to = open(to, O_WRONLY | O_CREAT | O_EXCL, 0666);
+	if (fd_to < 0)
+		goto out_error;
+
+	while (nread = read(fd_from, buf, sizeof buf), nread > 0)
+	{
+		char *out_ptr = buf;
+		ssize_t nwritten;
+
+		do
+		{
+			nwritten = write(fd_to, out_ptr, nread);
+
+			if (nwritten >= 0)
+			{
+				nread -= nwritten;
+				out_ptr += nwritten;
+			}
+			else if (errno != EINTR)
+			{
+				goto out_error;
+			}
+		} while (nread > 0);
+	}
+
+	if (nread == 0)
+	{
+		if (close(fd_to) < 0)
+		{
+			fd_to = -1;
+			goto out_error;
+		}
+		close(fd_from);
+
+		/* Success! */
+		return 0;
+	}
+
+out_error:
+	saved_errno = errno;
+
+	close(fd_from);
+	if (fd_to >= 0)
+		close(fd_to);
+
+	errno = saved_errno;
+	return -1;
+}
+
+void sendFileToClient(int new_socket, char from[], char file[])
+{
+	FILE *ptr;
+	int siz;
+	char buf[MAX];
+	ptr = fopen(from, "r");
+	if (ptr == NULL)
+	{
+		puts("mo file that bai");
+	}
+	fseek(ptr, 0, SEEK_END);
+	siz = ftell(ptr);
+	printf("%d", siz);
+	puts("Sending file size to the client\n");
+	sprintf(buf, "%d", siz);
+	send(new_socket, buf, sizeof(buf), 0); //send size
+
+	send(new_socket, file, sizeof(file), 0); //send name
+
+	char FileBuf[siz];
+	puts("Sending the picture as byte array\n");
+	fseek(ptr, 0, SEEK_END);
+	siz = ftell(ptr);
+	fseek(ptr, 0, SEEK_SET); //Going to the beginning of the file
+
+	while (!feof(ptr))
+	{
+		fread(FileBuf, sizeof(char), sizeof(FileBuf), ptr);
+		send(new_socket, FileBuf, sizeof(FileBuf), 0);
+		memset(FileBuf, 0, sizeof(FileBuf));
+	}
 }

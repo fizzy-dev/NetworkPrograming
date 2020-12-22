@@ -3,6 +3,7 @@
 #include <ctype.h>
 #include <string.h>
 #include <time.h>
+//#include "listFile.c"
 #define MAX 100
 typedef struct 
 {
@@ -11,7 +12,9 @@ typedef struct
     int number_act;
     int number_sign;
     char homepage[MAX];
+    //listFile *list;
 }DT;
+
 typedef struct NODE
 {
     DT x;

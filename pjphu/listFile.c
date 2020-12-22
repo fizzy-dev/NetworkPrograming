@@ -1,206 +1,147 @@
-#include "listFile.h"
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
+#include <stdbool.h>
+#define MAX 100
 
-struct node *head = NULL;
-struct node *current = NULL;
-//hien thi danh sach
-void printList()
+typedef struct file
 {
-   struct node *ptr = head;
+   char fileName[MAX];
+} file;
+
+typedef struct nodeFile
+{
+   file item;
+   struct nodeFile *next;
+} nodeFile;
+
+typedef struct listFile
+{
+   nodeFile *Head;
+   nodeFile *Tail;
+   nodeFile *Cur;
+} listFile;
+
+//hien thi danh sach
+void printListFile(listFile *l)
+{
+   nodeFile *ptr = l->Head;
    printf("\n[ ");
 
    //bat dau tu phan dau danh sach
    while (ptr != NULL)
    {
-      printf("(%s,%d) ", ptr->user.username, ptr->user.status);
+      printf("(%s)", ptr->item.fileName);
       ptr = ptr->next;
    }
-
    printf(" ]\n");
 }
 
-//chen link tai vi tri dau tien
-void insertFirst(char username[], char password[], int status)
+int ListFileSize(listFile *l)
 {
-   //tao mot link
-   struct node *link = (struct node *)malloc(sizeof(struct node));
+   int size = 0;
+   nodeFile *p = l->Head;
+   if (l->Head != NULL)
+   {
+      do
+      {
+         size = size + 1;
+         p = p->next;
+      } while (p != NULL);
+   }
+   else
+   {
+      size = 0;
+      return size;
+   }
+   return size;
+}
 
-   strcpy(link->user.username, username);
-   strcpy(link->user.password, password);
-   link->user.status = status;
-   //tro link nay toi first node cu
-   link->next = head;
-   //tro first toi first node moi
-   head = link;
+nodeFile *CreateNodeFile(file item)
+{
+   nodeFile *p = (nodeFile *)malloc(sizeof(nodeFile));
+   if (p == NULL)
+      return NULL;
+   p->item = item;
+   p->next = NULL;
+   return p;
+}
+
+nodeFile *FindByFileName(listFile *l, char *filename)
+{
+   nodeFile *tmp = l->Head;
+   while (tmp != NULL)
+   {
+      if (strcmp(tmp->item.fileName, filename) == 0)
+      {
+         return tmp;
+      }
+      tmp = tmp->next;
+   }
+   return NULL;
+}
+
+//chen link tai vi tri dau tien
+nodeFile *AddHeadFile(listFile *l, file item)
+{
+   if (!FindByFileName(l, item.fileName))
+      return NULL;
+   nodeFile *p = CreateNodeFile(item);
+   if (l->Head == NULL)
+      l->Head = l->Tail = p;
+   else
+   {
+      p->next = l->Head;
+      l->Head = p;
+   }
+   return p;
 }
 
 //xoa phan tu dau tien
-struct node *deleteFirst()
+nodeFile *deleteFirst(listFile *l)
 {
-
-   //luu tham chieu toi first link
-   struct node *tempLink = head;
-
-   //danh dau next toi first link la first
-   head = head->next;
-
-   //tra ve link bi xoa
-   return tempLink;
-}
-
-//kiem tra list co trong hay khong
-bool isEmpty()
-{
-   return head == NULL;
-}
-
-int length()
-{
-   int length = 0;
-   struct node *current;
-
-   for (current = head; current != NULL; current = current->next)
+   if (l->Head == NULL)
+      printf("LIST rong\n");
+   else
    {
-      length++;
+      nodeFile *p = l->Head;
+      l->Head = l->Head->next;
+      l->Cur = l->Head;
+      free(p);
    }
-
-   return length;
 }
 
-//tim mot link voi key da cho
-struct node *find(char *key)
+int deleteFileByName(listFile *l, char *filename)
 {
-
-   //bat dau tim tu first link
-   struct node *current = head;
-
-   //neu list la trong
-   if (head == NULL)
+   nodeFile *p = l->Head;
+   nodeFile *k = l->Head;
+   if (l->Head == NULL)
    {
-      return NULL;
+      return 0;
    }
-
-   //duyet qua list
-   while (strcmp(current->user.username, key) != 0)
+   else
    {
-      //neu day la last node
-      if (current->next == NULL)
+      //sosanh head de p chay truoc,k chay sau
+      if (strcmp(p->item.fileName, filename) == 0)
       {
-         return NULL;
+         l->Head = l->Head->next;
+         free(p);
       }
       else
       {
-         //di chuyen toi next link
-         current = current->next;
+         p = p->next;
       }
-   }
-
-   //neu tim thay du lieu, tra ve link hien tai
-   return current;
-}
-
-void saveUsersToFile(FILE *fp)
-{
-   //bat dau tim tu first link
-   struct node *current = head;
-
-   //neu list la trong
-   if (head == NULL)
-   {
-      return;
-   }
-
-   //duyet qua list
-   while (current != NULL)
-   {
-         //di chuyen toi next link
-         fprintf(fp, "%s %s %d\n", current->user.username, current->user.password, current->user.status);
-         current = current->next;  
+      while (p->next != NULL)
+      {
+         if (strcmp(p->item.fileName, filename) == 0)
+         {
+            k->next = p->next;
+            free(p);
+            return 1;
+         }
+         p = p->next;
+         k = k->next;
+      }
+      return 2; //khong co file can tim
    }
 }
-
-// //xoa mot link voi key da cho
-// struct node* deleteKey(int key){
-
-//    //bat dau tu first link
-//    struct node* current = head;
-//    struct node* previous = NULL;
-
-//    //neu list la trong
-//    if(head == NULL){
-//       return NULL;
-//    }
-
-//    //duyet qua list
-//    while(current->key != key){
-
-//       //neu day la last node
-//       if(current->next == NULL){
-//          return NULL;
-//       }else {
-//          //luu tham chieu toi link hien tai
-//          previous = current;
-//          //di chuyen toi next link
-//          current = current->next;
-//       }
-
-//    }
-
-//    //cap nhat link
-//    if(current == head) {
-//       //thay doi first de tro toi next link
-//       head = head->next;
-//    }else {
-//       //bo qua link hien tai
-//       previous->next = current->next;
-//    }
-
-//    return current;
-// }
-
-// // ham sap xep
-// void sort(){
-
-//    int i, j, k, tempKey, tempData ;
-//    struct node *current;
-//    struct node *next;
-
-//    int size = length();
-//    k = size ;
-
-//    for ( i = 0 ; i < size - 1 ; i++, k-- ) {
-//       current = head ;
-//       next = head->next ;
-
-//       for ( j = 1 ; j < k ; j++ ) {
-
-//          if ( current->data > next->data ) {
-//             tempData = current->data ;
-//             current->data = next->data;
-//             next->data = tempData ;
-
-//             tempKey = current->key;
-//             current->key = next->key;
-//             next->key = tempKey;
-//          }
-
-//          current = current->next;
-//          next = next->next;
-//       }
-//    }
-// }
-
-// // ham dao nguoc list
-// void reverse(struct node** head_ref) {
-//    struct node* prev   = NULL;
-//    struct node* current = *head_ref;
-//    struct node* next;
-
-//    while (current != NULL) {
-//       next  = current->next;
-//       current->next = prev;
-//       prev = current;
-//       current = next;
-//    }
-
-//    *head_ref = prev;
-// }

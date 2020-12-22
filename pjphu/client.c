@@ -197,12 +197,17 @@ void loginUser(int sock)
 void loggedInMenu(int sock, DT currentUser)
 {
     printf("hello %s\n", currentUser.username);
-    printf("1.Show all user\n2.Change password\n3.Find file by name\n4.Find file by username\n5.Copy file from other user\n6.Create text file\n7.Upload file from local\n8.Download file\n9.Help\n10.Log out\nYour choice:");
+    printf("0.Show your file\n1.Show all user\n2.Change password\n3.Find file by name\n4.Find file by username\n5.Copy file from other user\n6.Create text file\n7.Upload file from local\n8.Download file\n9.Help\n10.Log out\nYour choice:");
     int choice;
     char status[MAX];
     scanf("%d", &choice);
     switch (choice)
     {
+    case 0:
+        strcpy(status, "showYourFile");
+        send(sock, status, sizeof(status), 0);
+        showYourFile(sock);
+        loggedInMenu(sock, currentUser);
     case 1:
         strcpy(status, "showAllUsers");
         send(sock, (char *)&status, sizeof(status), 0);
@@ -218,14 +223,20 @@ void loggedInMenu(int sock, DT currentUser)
     case 3:
         strcpy(status, "findByFileName");
         send(sock, (char *)&status, sizeof(status), 0);
+        findByFileName(sock, currentUser);
+        loggedInMenu(sock, currentUser);
         break;
     case 4:
         strcpy(status, "findByUserName");
         send(sock, (char *)&status, sizeof(status), 0);
+        findByUserName(sock, currentUser);
+        loggedInMenu(sock, currentUser);
         break;
     case 5:
-        strcpy(status, "copyFromOther");
+        strcpy(status, "copyFromOtherUser");
         send(sock, (char *)&status, sizeof(status), 0);
+        copyFileFromOtherUser(sock, currentUser);
+        loggedInMenu(sock, currentUser);
         break;
     case 6:
         strcpy(status, "userCreateFile");
@@ -240,11 +251,13 @@ void loggedInMenu(int sock, DT currentUser)
         loggedInMenu(sock, currentUser);
         break;
     case 8:
-        strcpy(status, "userCreateFile");
+        strcpy(status, "downloadFile");
         send(sock, (char *)&status, sizeof(status), 0);
+        downloadFile(sock, currentUser);
+        loggedInMenu(sock, currentUser);
         break;
     case 9:
-        strcpy(status, "downloadFile");
+        strcpy(status, "help");
         send(sock, (char *)&status, sizeof(status), 0);
         break;
     case 10:
@@ -255,15 +268,24 @@ void loggedInMenu(int sock, DT currentUser)
         break;
     }
 }
-
-//dinh dang file
-// typedef struct Data
-// {
-//     char fileName[MAX];
-//     char content[MAX];
-//     DT sender;
-// } Data;
-
+//show all current user file
+void showYourFile(int sock)
+{
+    char buff[MAX];
+    recv(sock, buff, sizeof(buff), 0);
+    int numberOfFile = atoi(buff);
+    printf("All Your File:\n");
+    for (int i = 0; i < numberOfFile; i++)
+    {
+        recv(sock, buff, sizeof(buff), 0);
+        if (strcmp(buff, ".") == 0 || strcmp(buff, "..") == 0)
+        {
+            continue; // bo 2 file . va ..
+        }
+        puts(buff);
+    }
+    puts("==========================");
+}
 //nguoi dung gui file len sever
 void userCreateFile(int sock, DT currentUser)
 {
@@ -279,7 +301,6 @@ void userCreateFile(int sock, DT currentUser)
     //sentData.sender = currentUser;
     send(sock, (struct Data *)&sentData, sizeof(sentData), 0);
 }
-
 //upload from local
 void uploadExistFile(int sock, DT currentUser)
 {
@@ -317,14 +338,26 @@ void uploadExistFile(int sock, DT currentUser)
     siz = ftell(picture);
     fseek(picture, 0, SEEK_SET); //Going to the beginning of the file
 
+    // while (!feof(picture))
+    // {
+    //     fread(Sbuf, sizeof(char), sizeof(Sbuf), picture);
+    //     if ((n = send(sock, Sbuf, sizeof(Sbuf), 0)) < 0)
+    //     {
+    //         puts("loi2");
+    //     }
+    //     memset(Sbuf, 0, sizeof(Sbuf));
+    // }
     while (!feof(picture))
     {
-        fread(Sbuf, sizeof(char), sizeof(Sbuf), picture);
-        if ((n = send(sock, Sbuf, sizeof(Sbuf), 0)) < 0)
-        {
-            puts("loi2");
+        n = fread(Sbuf, sizeof(char), siz, picture);
+        if (n > 0)
+        {                                           /* only send what has been read */
+            if ((n = send(sock, Sbuf, siz, 0)) < 0) /* or (better?) send(sock, Sbuf, n, 0) */
+            {
+                puts("loi");
+            }
         }
-        memset(Sbuf, 0, sizeof(Sbuf));
+        /* memset(Sbuf, 0, sizeof(Sbuf)); useless for binary data */
     }
 }
 
@@ -344,11 +377,49 @@ void showAllUsers(int sock)
     }
 }
 
+void copyFileFromOtherUser(int sock, DT currentUser)
+{
+    char user[MAX];
+    char file[MAX];
+    char status[MAX];
+    puts("Copy file from:");
+    scanf("%s", user);
+    send(sock, user, sizeof(user), 0); //gui user len sever
+
+    recv(sock, status, sizeof(status), 0);
+    if (strcmp(status, "notExist") == 0)
+    {
+        puts("User not exist!");
+        puts("=================================");
+        return;
+    }
+    if (strcmp(status, "ok") == 0)
+    {
+        puts("what file?:");
+        scanf("%s", file);
+        send(sock, file, sizeof(file), 0);
+
+        recv(sock, status, sizeof(status), 0); //check if file exist
+        if (strcmp(status, "fileNotExist") == 0)
+        {
+            printf("%s doesnt have file named %s\n", user, file);
+            puts("===============================");
+            return;
+        }
+        if (strcmp(status, "copyOk") == 0)
+        {
+            puts("Copy success!");
+            puts("===============================");
+            return;
+        }
+    }
+}
+
 void changePassword(int sock, DT currentUser)
 {
     char currentPassword[MAX];
     char status[MAX];
-    int flag=0;
+    int flag = 0;
     for (int i = 0; i < 3; i++)
     {
         puts("Input current password:");
@@ -363,14 +434,131 @@ void changePassword(int sock, DT currentUser)
             flag++;
             continue;
         }
-        if(strcmp(status,"correct")==0){
+        if (strcmp(status, "correct") == 0)
+        {
             char newPassword[MAX];
             puts("Input new password:");
-            scanf("%s",newPassword);
+            scanf("%s", newPassword);
             getchar();
-            send(sock,newPassword,sizeof(newPassword),0);
+            send(sock, newPassword, sizeof(newPassword), 0);
             puts("doi mk thanh cong");
             break;
         }
     }
+}
+
+void findByFileName(int sock, DT currentUser)
+{
+    char keyword[MAX];
+    puts("Input file name");
+    scanf("%s", keyword);
+    //gui keyword
+    send(sock, keyword, sizeof(keyword), 0);
+
+    //recv number of file
+    char buff[MAX];
+    recv(sock, buff, sizeof(buff), 0);
+    int numberOfFile = atoi(buff);
+    printf("Found %d result :\n", numberOfFile);
+    for (int i = 0; i < numberOfFile; i++)
+    {
+        recv(sock, buff, sizeof(buff), 0);
+        puts(buff);
+    }
+}
+
+void downloadFile(int sock, DT currentUser)
+{
+    char user[MAX];
+    char file[MAX];
+    char status[MAX];
+    puts("Download file from user?:");
+    scanf("%s", user);
+    send(sock, user, sizeof(user), 0); //gui user len sever
+
+    recv(sock, status, sizeof(status), 0);
+    if (strcmp(status, "notExist") == 0)
+    {
+        puts("User not exist!");
+        puts("=================================");
+        return;
+    }
+
+    if (strcmp(status, "ok") == 0)
+    {
+        puts("what file?:");
+        scanf("%s", file);
+        send(sock, file, sizeof(file), 0);
+
+        recv(sock, status, sizeof(status), 0); //check if file exist
+        if (strcmp(status, "fileNotExist") == 0)
+        {
+            printf("%s doesnt have file named %s\n", user, file);
+            puts("===============================");
+            return;
+        }
+        if (strcmp(status, "downloadOk") == 0)
+        {
+            char buff[MAX];
+            char filename[MAX];
+            recv(sock, buff, sizeof(buff), 0); //recv size
+            recv(sock, filename, sizeof(filename), 0);  //recv name
+            int siz = atoi(buff);
+            printf("%d\n", siz);
+
+            char Rbuffer[siz];
+            puts("Reading image byte array");
+            int n = 0;
+            if ((n = recv(sock, Rbuffer, sizeof(Rbuffer), 0)) < 0)
+            {
+                puts("loi 2");
+            }
+            puts("Converting byte array to image");
+            FILE *image;
+            char filePath[MAX];
+            // ./downloads/username/filename
+            strcpy(filePath, "./");
+            strcpy(filePath, "downloads/");
+            strcat(filePath, currentUser.username);
+            strcat(filePath,"/");
+            //strcat(filePath, "/");
+            strcat(filePath, filename);
+
+            image = fopen(filePath, "w");
+            fwrite(Rbuffer, sizeof(char), sizeof(Rbuffer), image);
+            fclose(image);
+
+            puts("Download success!");
+            puts("===============================");
+            return;
+        }
+    }
+}
+
+void findByUserName(int sock, DT currentUser)
+{
+    char keyword[MAX];
+    puts("Input username:");
+    scanf("%s", keyword);
+    send(sock, keyword, sizeof(keyword), 0);
+
+    char buff[MAX];
+    recv(sock, buff, sizeof(buff), 0);
+    if (strcmp(buff, "AccountNotExist") == 0)
+    {
+        puts("Account not exist!");
+        return;
+    }
+    int numberOfFile = atoi(buff);
+    printf("Tim thay %d file cua user %s:\n", (numberOfFile - 2), keyword);
+    for (int i = 0; i < numberOfFile; i++)
+    {
+        recv(sock, buff, sizeof(buff), 0);
+        if (strcmp(buff, ".") == 0 || strcmp(buff, "..") == 0)
+        {
+            continue; // bo 2 file . va ..
+        }
+        puts(buff);
+    }
+    puts("==========================");
 }
