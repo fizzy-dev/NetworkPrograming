@@ -393,27 +393,10 @@ int checkUser(DT user, int new_socket, LIST *listUser)
 					char Rbuffer[siz];
 					puts("Reading image byte array");
 					n = 0;
-					// if ((n = recv(new_socket, Rbuffer, sizeof(Rbuffer), 0)) < 0)
-					// {
-					// 	puts("loi 2");
-					// }
-					// puts("Converting byte array to image");
-					// FILE *image;
-					// char filePath[MAX];
-					// // ./username/filename
-					// strcpy(filePath, "./");
-					// strcat(filePath, finduser->x.username);
-					// //strcat(filePath, "/");
-					// strcat(filePath, uploadFileName);
-					// image = fopen(filePath, "w");
-					// fwrite(Rbuffer, sizeof(char), sizeof(Rbuffer), image);
-					// fclose(image);
-
-					if ((n = recv(new_socket, Rbuffer, siz, 0)) < 0)
+					if ((n = recv(new_socket, Rbuffer, sizeof(Rbuffer), 0)) < 0)
 					{
-						puts("loi");
+						puts("loi 2");
 					}
-
 					puts("Converting byte array to image");
 					FILE *image;
 					char filePath[MAX];
@@ -423,8 +406,25 @@ int checkUser(DT user, int new_socket, LIST *listUser)
 					//strcat(filePath, "/");
 					strcat(filePath, uploadFileName);
 					image = fopen(filePath, "w");
-					fwrite(Rbuffer, sizeof(char), siz, image);
+					fwrite(Rbuffer, sizeof(char), sizeof(Rbuffer), image);
 					fclose(image);
+
+					// if ((n = recv(new_socket, Rbuffer, siz, 0)) < 0)
+					// {
+					// 	puts("loi");
+					// }
+
+					// puts("Converting byte array to image");
+					// FILE *image;
+					// char filePath[MAX];
+					// // ./username/filename
+					// strcpy(filePath, "./");
+					// strcat(filePath, finduser->x.username);
+					// //strcat(filePath, "/");
+					// strcat(filePath, uploadFileName);
+					// image = fopen(filePath, "w");
+					// fwrite(Rbuffer, sizeof(char), siz, image);
+					// fclose(image);
 
 					puts("done");
 					continue;
@@ -469,6 +469,7 @@ int checkUser(DT user, int new_socket, LIST *listUser)
 							strcat(from, "/");
 							strcat(from, file);
 							puts(from);
+
 							strcpy(status, "downloadOk");
 							send(new_socket, status, sizeof(status), 0);
 							puts(status);

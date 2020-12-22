@@ -338,27 +338,27 @@ void uploadExistFile(int sock, DT currentUser)
     siz = ftell(picture);
     fseek(picture, 0, SEEK_SET); //Going to the beginning of the file
 
-    // while (!feof(picture))
-    // {
-    //     fread(Sbuf, sizeof(char), sizeof(Sbuf), picture);
-    //     if ((n = send(sock, Sbuf, sizeof(Sbuf), 0)) < 0)
-    //     {
-    //         puts("loi2");
-    //     }
-    //     memset(Sbuf, 0, sizeof(Sbuf));
-    // }
     while (!feof(picture))
     {
-        n = fread(Sbuf, sizeof(char), siz, picture);
-        if (n > 0)
-        {                                           /* only send what has been read */
-            if ((n = send(sock, Sbuf, siz, 0)) < 0) /* or (better?) send(sock, Sbuf, n, 0) */
-            {
-                puts("loi");
-            }
+        fread(Sbuf, sizeof(char), sizeof(Sbuf), picture);
+        if ((n = send(sock, Sbuf, sizeof(Sbuf), 0)) < 0)
+        {
+            puts("loi2");
         }
-        /* memset(Sbuf, 0, sizeof(Sbuf)); useless for binary data */
+        memset(Sbuf, 0, sizeof(Sbuf));
     }
+    // while (!feof(picture))
+    // {
+    //     n = fread(Sbuf, sizeof(char), siz, picture);
+    //     if (n > 0)
+    //     {                                           /* only send what has been read */
+    //         if ((n = send(sock, Sbuf, siz, 0)) < 0) /* or (better?) send(sock, Sbuf, n, 0) */
+    //         {
+    //             puts("loi");
+    //         }
+    //     }
+    //     /* memset(Sbuf, 0, sizeof(Sbuf)); useless for binary data */
+    // }
 }
 
 void showAllUsers(int sock)
@@ -499,6 +499,7 @@ void downloadFile(int sock, DT currentUser)
         }
         if (strcmp(status, "downloadOk") == 0)
         {
+            
             char buff[MAX];
             char filename[MAX];
             recv(sock, buff, sizeof(buff), 0); //recv size
