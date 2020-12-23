@@ -6,5 +6,3 @@ quang4 123456
 quang5 123456
 quang6 123456
 thai 123456
-thai1 123456
-thai2 123456

@@ -183,6 +183,8 @@ void loginUser(int sock)
     if (strcmp(status, "ok") == 0)
     {
         DT currentUser = account;
+        // DT * currentUser = (DT *)malloc(sizeof(DT));
+        // (*currentUser)=account;
         while (1)
         {
             loggedInMenu(sock, currentUser);
@@ -259,10 +261,14 @@ void loggedInMenu(int sock, DT currentUser)
     case 9:
         strcpy(status, "help");
         send(sock, (char *)&status, sizeof(status), 0);
+        helpUser(sock);
+        loggedInMenu(sock, currentUser);
         break;
     case 10:
         strcpy(status, "logout");
         send(sock, (char *)&status, sizeof(status), 0);
+        logoutUser(sock, currentUser);
+        menuLoginRegister(sock);
         break;
     default:
         break;
@@ -499,11 +505,11 @@ void downloadFile(int sock, DT currentUser)
         }
         if (strcmp(status, "downloadOk") == 0)
         {
-            
+
             char buff[MAX];
             char filename[MAX];
-            recv(sock, buff, sizeof(buff), 0); //recv size
-            recv(sock, filename, sizeof(filename), 0);  //recv name
+            recv(sock, buff, sizeof(buff), 0);         //recv size
+            recv(sock, filename, sizeof(filename), 0); //recv name
             int siz = atoi(buff);
             printf("%d\n", siz);
 
@@ -521,7 +527,7 @@ void downloadFile(int sock, DT currentUser)
             strcpy(filePath, "./");
             strcpy(filePath, "downloads/");
             strcat(filePath, currentUser.username);
-            strcat(filePath,"/");
+            strcat(filePath, "/");
             //strcat(filePath, "/");
             strcat(filePath, filename);
 
@@ -562,4 +568,18 @@ void findByUserName(int sock, DT currentUser)
         puts(buff);
     }
     puts("==========================");
+}
+
+void helpUser(int sock){
+    char buff[MAX];
+    recv(sock,buff,sizeof(buff),0);
+    puts(buff);
+    puts("=================================");
+}
+
+void logoutUser(int sock, DT currentUser)
+{
+    DT new;
+    currentUser=new;
+    puts("Logged out!");
 }

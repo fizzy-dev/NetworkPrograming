@@ -110,20 +110,27 @@ void main(int argc, char *argv[])
 
 void *clientHandler(void *arg)
 {
-	char status[MAX];
 	int new_socket = (int)arg;
-	DT receivedAccount;
-	NODE *currentUser, *findUser;
-	char password[100];
+
+	// DT receivedAccount;
+	// NODE *currentUser, *findUser;
+	// char password[100];
+	// char status[MAX];
 
 	LIST *listUser = (LIST *)malloc(sizeof(LIST));
 	insertFromFile(listUser, "users.txt");
-	puts(listUser->Head->x.username);
-	puts("after insert");
-	//PrintList(listUser);
+	menuLoginRegister(new_socket, listUser);
+}
 
+void menuLoginRegister(int new_socket, LIST *listUser)
+{
 	while (1)
 	{
+		DT receivedAccount;
+		NODE *currentUser, *findUser;
+		char password[100];
+		char status[MAX];
+
 		recv(new_socket, (char *)&status, sizeof(status), 0);
 		puts(status);
 		//neu nguoi dung signup
@@ -480,6 +487,20 @@ int checkUser(DT user, int new_socket, LIST *listUser)
 					}
 					continue;
 				}
+				//9.Help
+				if (strcmp(status, "help") == 0)
+				{
+					char buff[MAX];
+					strcpy(buff, "comming soon ^^");
+					send(new_socket, buff, sizeof(buff), 0);
+					continue;
+				}
+				//10.log out
+				if (strcmp(status, "logout") == 0)
+				{
+					puts(status);
+					menuLoginRegister(new_socket, listUser);
+				}
 			}
 			return 3;
 		}
@@ -579,7 +600,7 @@ void findFileByFileName(LIST *l, char *keyword, int new_socket)
 		// ./username
 		strcat(path, "./");
 		strcat(path, p->x.username);
-
+		puts(path);
 		struct dirent *dp;
 		dirp = opendir(path); //filepath
 		strcpy(path, "");	  //resetpath
@@ -590,14 +611,16 @@ void findFileByFileName(LIST *l, char *keyword, int new_socket)
 		}
 		while ((dp = readdir(dirp)))
 		{
-			char *ptr = strchr(dp->d_name, '.');
-			*ptr = 0;
+			//puts(dp->d_name);
+			// char *ptr = strchr(dp->d_name, '.');
+			// *ptr = 0;
 			if (strcmp(dp->d_name, keyword) == 0)
 			{
 				puts(dp->d_name);
 				numberofFile++;
 			}
 		}
+		puts("+===================");
 		if (errno)
 		{
 			perror("readdir()");
@@ -631,13 +654,13 @@ void findFileByFileName(LIST *l, char *keyword, int new_socket)
 		while ((dp = readdir(dirp)))
 		{
 			char file[MAX];
-			char *ptr = strchr(dp->d_name, '.');
+			// char *ptr = strchr(dp->d_name, '.');
+			// *ptr = 0;
 			//users | []
 			strcpy(file, dp->d_name);
 			strcat(file, " | From user: ");
 			strcat(file, k->x.username);
 
-			*ptr = 0;
 			if (strcmp(dp->d_name, keyword) == 0)
 			{
 				send(new_socket, file, sizeof(file), 0);
