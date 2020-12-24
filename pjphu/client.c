@@ -172,11 +172,11 @@ void loginUser(int sock)
     //Neu sai mat khau
     if (strcmp(status, "wrongPassword") == 0)
     {
-        /* code */
+        menuLoginRegister(sock);
     }
-    if (strcmp(status, "accountPassword") == 0)
+    if (strcmp(status, "accountNotExist") == 0)
     {
-        /*code*/
+        menuLoginRegister(sock);
     }
 
     //neu dang nhap thanh cong
@@ -326,6 +326,7 @@ void uploadExistFile(int sock, DT currentUser)
     if (picture == NULL)
     {
         puts("Mo file khong thanh cong\n");
+        loggedInMenu(sock, currentUser);
     }
     fseek(picture, 0, SEEK_END);
     siz = ftell(picture);
@@ -483,14 +484,14 @@ void downloadFile(int sock, DT currentUser)
     send(sock, user, sizeof(user), 0); //gui user len sever
 
     recv(sock, status, sizeof(status), 0);
-    if (strcmp(status, "notExist") == 0)
+    if (strcmp(status, "userNotExist") == 0)
     {
         puts("User not exist!");
         puts("=================================");
         return;
     }
 
-    if (strcmp(status, "ok") == 0)
+    if (strcmp(status, "userOk") == 0)
     {
         puts("what file?:");
         scanf("%s", file);
@@ -570,9 +571,10 @@ void findByUserName(int sock, DT currentUser)
     puts("==========================");
 }
 
-void helpUser(int sock){
+void helpUser(int sock)
+{
     char buff[MAX];
-    recv(sock,buff,sizeof(buff),0);
+    recv(sock, buff, sizeof(buff), 0);
     puts(buff);
     puts("=================================");
 }
@@ -580,6 +582,6 @@ void helpUser(int sock){
 void logoutUser(int sock, DT currentUser)
 {
     DT new;
-    currentUser=new;
+    currentUser = new;
     puts("Logged out!");
 }

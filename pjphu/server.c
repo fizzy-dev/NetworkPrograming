@@ -446,13 +446,13 @@ int checkUser(DT user, int new_socket, LIST *listUser)
 					NODE *p = FindByUsername(listUser, user);
 					if (p == NULL)
 					{
-						strcpy(status, "notExist");
+						strcpy(status, "userNotExist");
 						send(new_socket, status, sizeof(status), 0);
 						continue;
 					}
 					else
 					{
-						strcpy(status, "ok");
+						strcpy(status, "userOk");
 						send(new_socket, status, sizeof(status), 0);
 
 						recv(new_socket, file, sizeof(file), 0);
@@ -817,4 +817,5 @@ void sendFileToClient(int new_socket, char from[], char file[])
 		send(new_socket, FileBuf, sizeof(FileBuf), 0);
 		memset(FileBuf, 0, sizeof(FileBuf));
 	}
+	puts("done");
 }
