@@ -1,7 +1,6 @@
-quang 123456
-quang1 123456
-quang2 123456
-quang3 123456
-quang4 123456
-quang5 123456
-123 13
+quang 123
+quang1 123
+quang2 123
+quang3 123
+quang4 123
+quang5 123

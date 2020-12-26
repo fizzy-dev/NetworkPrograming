@@ -930,7 +930,6 @@ int server_recv_file(int conn_sock, char *dir_name, NODE *currentUser)
 }
 
 //server send file
-
 char* extract_file_name(char* file_path) {
 	int i;
 	int n = strlen(file_path);

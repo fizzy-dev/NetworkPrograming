@@ -148,6 +148,10 @@ void registerUser(int sock)
         if (strcmp(status, "ok") == 0)
         {
             puts("dk thanh cong");
+            char downloadRepo[MAX];
+            strcpy(downloadRepo,"downloads/");
+            strcat(downloadRepo,account.username);
+            makeDirectory(downloadRepo);
             //break;
             menuLoginRegister(sock);
         }
@@ -285,6 +289,17 @@ void loggedInMenu(int sock, DT currentUser)
         break;
     }
 }
+
+//server make directory for each user when signup
+void makeDirectory(char *folderPath)
+{
+	struct stat st = {0};
+	if (stat(folderPath, &st) == -1)
+	{
+		mkdir(folderPath, 0700);
+	}
+}
+
 //show all current user file
 void showYourFile(int sock)
 {
