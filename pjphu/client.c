@@ -20,7 +20,6 @@
 #define MSG_CLOSE "Cancel file transfer"
 #define MSG_RECV "Received."
 
-
 typedef struct
 {
     char username[MAX];
@@ -149,8 +148,8 @@ void registerUser(int sock)
         {
             puts("dk thanh cong");
             char downloadRepo[MAX];
-            strcpy(downloadRepo,"downloads/");
-            strcat(downloadRepo,account.username);
+            strcpy(downloadRepo, "downloads/");
+            strcat(downloadRepo, account.username);
             makeDirectory(downloadRepo);
             //break;
             menuLoginRegister(sock);
@@ -213,8 +212,12 @@ void loginUser(int sock)
 //in menu khi da dang nhap
 void loggedInMenu(int sock, DT currentUser)
 {
+    puts("=======================================");
     printf("hello %s\n", currentUser.username);
-    printf("0.Show your file\n1.Show all user\n2.Change password\n3.Find file by name\n4.Find file by username\n5.Copy file from other user\n6.Create text file\n7.Upload file from local\n8.Download file\n9.Help\n10.Log out\nYour choice:");
+    puts("---------------------------------------");
+    printf("0.Show your file\n1.Show all user\n2.Change password\n3.Find file by name\n4.Find file by username\n5.Copy file from other user\n6.Create text file\n7.Upload file from local\n8.Download file\n9.Help\n10.Log out\n");
+    puts("=======================================");
+    printf("Your choice:");
     int choice;
     char status[MAX];
     scanf("%d", &choice);
@@ -293,13 +296,12 @@ void loggedInMenu(int sock, DT currentUser)
 //server make directory for each user when signup
 void makeDirectory(char *folderPath)
 {
-	struct stat st = {0};
-	if (stat(folderPath, &st) == -1)
-	{
-		mkdir(folderPath, 0700);
-	}
+    struct stat st = {0};
+    if (stat(folderPath, &st) == -1)
+    {
+        mkdir(folderPath, 0700);
+    }
 }
-
 //show all current user file
 void showYourFile(int sock)
 {
@@ -316,7 +318,6 @@ void showYourFile(int sock)
         }
         puts(buff);
     }
-    puts("==========================");
 }
 //nguoi dung gui file len sever
 void userCreateFile(int sock, DT currentUser)
@@ -345,7 +346,7 @@ void uploadExistFile(int sock, DT currentUser)
     printf("Nhap duong dan den file:\n");
     scanf("%s", filePath);
     getchar();
-    client_send_file(sock,filePath);
+    client_send_file(sock, filePath);
 }
 
 void showAllUsers(int sock)
@@ -377,7 +378,6 @@ void copyFileFromOtherUser(int sock, DT currentUser)
     if (strcmp(status, "notExist") == 0)
     {
         puts("User not exist!");
-        puts("=================================");
         return;
     }
     if (strcmp(status, "ok") == 0)
@@ -389,14 +389,12 @@ void copyFileFromOtherUser(int sock, DT currentUser)
         recv(sock, status, sizeof(status), 0); //check if file exist
         if (strcmp(status, "fileNotExist") == 0)
         {
-            printf("%s doesnt have file named %s\n", user, file);
-            puts("===============================");
+            printf("%s doesn't have any file named %s\n", user, file);
             return;
         }
         if (strcmp(status, "copyOk") == 0)
         {
             puts("Copy success!");
-            puts("===============================");
             return;
         }
     }
@@ -467,7 +465,6 @@ void downloadFile(int sock, DT currentUser)
     if (strcmp(status, "userNotExist") == 0)
     {
         puts("User not exist!");
-        puts("=================================");
         return;
     }
 
@@ -481,15 +478,14 @@ void downloadFile(int sock, DT currentUser)
         if (strcmp(status, "fileNotExist") == 0)
         {
             printf("%s doesnt have file named %s\n", user, file);
-            puts("===============================");
             return;
         }
         if (strcmp(status, "downloadOk") == 0)
         {
             char dest[MAX];
-            strcpy(dest,"downloads/");
-            strcpy(dest,currentUser.username);
-            client_recv_file(sock,dest,currentUser);
+            strcpy(dest, "downloads/");
+            strcpy(dest, currentUser.username);
+            client_recv_file(sock, dest, currentUser);
 
             // char buff[MAX];
             // char filename[MAX];
@@ -521,7 +517,6 @@ void downloadFile(int sock, DT currentUser)
             // fclose(image);
 
             puts("Download success!");
-            puts("===============================");
             return;
         }
     }
@@ -552,7 +547,6 @@ void findByUserName(int sock, DT currentUser)
         }
         puts(buff);
     }
-    puts("==========================");
 }
 
 void helpUser(int sock)
@@ -560,7 +554,6 @@ void helpUser(int sock)
     char buff[MAX];
     recv(sock, buff, sizeof(buff), 0);
     puts(buff);
-    puts("=================================");
 }
 
 void logoutUser(int sock, DT currentUser)
@@ -572,292 +565,303 @@ void logoutUser(int sock, DT currentUser)
 
 //client send file
 
-char* extract_file_name(char* file_path) {
-	int i;
-	int n = strlen(file_path);
-	char* file_name;
-	for(i = n-1; i >= 0; --i) {
-		if(file_path[i] == '/')
-			break;
-	}
+char *extract_file_name(char *file_path)
+{
+    int i;
+    int n = strlen(file_path);
+    char *file_name;
+    for (i = n - 1; i >= 0; --i)
+    {
+        if (file_path[i] == '/')
+            break;
+    }
 
-	if(i == 0) //current directory so that no '/'
-		return file_path;
+    if (i == 0) //current directory so that no '/'
+        return file_path;
 
-	file_name = (char*)malloc((n-i)*sizeof(char));
-	memcpy(file_name, &file_path[i+1], n-i);
+    file_name = (char *)malloc((n - i) * sizeof(char));
+    memcpy(file_name, &file_path[i + 1], n - i);
 
-	return file_name;
+    return file_name;
 }
 
-int client_send_file(int client_sock, char* file_path) {
-	struct stat st;
-	char recv_data[BUFF_SIZE];
-	char sendbuff[BUFF_SIZE];
-	int bytes_sent, bytes_received;
-	FILE* fp;
-	int nLeft, idx;
-	char* file_name = NULL;
-	off_t file_size = 0;
-	char file_size_str[65];
-	size_t result = 0;
+int client_send_file(int client_sock, char *file_path)
+{
+    struct stat st;
+    char recv_data[BUFF_SIZE];
+    char sendbuff[BUFF_SIZE];
+    int bytes_sent, bytes_received;
+    FILE *fp;
+    int nLeft, idx;
+    char *file_name = NULL;
+    off_t file_size = 0;
+    char file_size_str[65];
+    size_t result = 0;
 
-	if(file_path[0] == '\0') { // enter an empty string
-		printf("Sending file ended. Exiting.\n");
-		bytes_sent = send(client_sock, file_path, 1, 0); 
-		if(bytes_sent <= 0) 
-			printf("Connection closed!\n");
-		return 1;
-	}
+    if (file_path[0] == '\0')
+    { // enter an empty string
+        printf("Sending file ended. Exiting.\n");
+        bytes_sent = send(client_sock, file_path, 1, 0);
+        if (bytes_sent <= 0)
+            printf("Connection closed!\n");
+        return 1;
+    }
 
-	// check if file exists
-	if(stat(file_path, &st) == -1) { // Not exists
-		fprintf(stderr, "Error: File not found.\n");
-		bytes_sent = send(client_sock, MSG_CLOSE, strlen(MSG_CLOSE), 0); //echo error message
-		if(bytes_sent <= 0) 
-			printf("Connection closed!\n");
-		return -1;
-	}
+    // check if file exists
+    if (stat(file_path, &st) == -1)
+    { // Not exists
+        fprintf(stderr, "Error: File not found.\n");
+        bytes_sent = send(client_sock, MSG_CLOSE, strlen(MSG_CLOSE), 0); //echo error message
+        if (bytes_sent <= 0)
+            printf("Connection closed!\n");
+        return -1;
+    }
 
-	file_name = extract_file_name(file_path);
-	printf("Uploading file to server: %s\n",file_name);	
-	bytes_sent = send(client_sock, file_name, strlen(file_name), 0);
-	if(bytes_sent <= 0) {
-		printf("Connection closed!\n");
-		return -1;
-	}
-	
-	// confirm that server received file name and check file status on server side
-	bytes_received = recv(client_sock, recv_data, BUFF_SIZE-1, 0); 
-	if(bytes_received <= 0) {
-		printf("Connection closed!\n");
-		return -1;
-	}
-	else
-		recv_data[bytes_received] = '\0'; 
+    file_name = extract_file_name(file_path);
+    printf("Uploading file to server: %s\n", file_name);
+    bytes_sent = send(client_sock, file_name, strlen(file_name), 0);
+    if (bytes_sent <= 0)
+    {
+        printf("Connection closed!\n");
+        return -1;
+    }
 
-	printf("%s\n", recv_data);
-	if(strcmp(recv_data, MSG_DUP_FILE) == 0)		//file was found on server, duplicate file	
-		return -1;
-	bzero(recv_data, sizeof(recv_data));
+    // confirm that server received file name and check file status on server side
+    bytes_received = recv(client_sock, recv_data, BUFF_SIZE - 1, 0);
+    if (bytes_received <= 0)
+    {
+        printf("Connection closed!\n");
+        return -1;
+    }
+    else
+        recv_data[bytes_received] = '\0';
 
-	file_size = st.st_size;
-	sprintf(file_size_str,"%lu",file_size);
-	bytes_sent = send(client_sock, file_size_str, strlen(file_size_str), 0);
-	if(bytes_sent <= 0) {
-		printf("Connection closed!\n");
-		return -1;
-	}
+    printf("%s\n", recv_data);
+    if (strcmp(recv_data, MSG_DUP_FILE) == 0) //file was found on server, duplicate file
+        return -1;
+    bzero(recv_data, sizeof(recv_data));
 
-	//open file and send data
-	if((fp=fopen(file_path, "rb")) == NULL) {
-		fprintf(stderr, "Open file error.\n");
-		exit(1);
-	}
-	int loop_size = file_size;
-	nLeft = file_size%BUFF_SIZE;	// cuz file size is not divisible by BUFF_SIZE
+    file_size = st.st_size;
+    sprintf(file_size_str, "%lu", file_size);
+    bytes_sent = send(client_sock, file_size_str, strlen(file_size_str), 0);
+    if (bytes_sent <= 0)
+    {
+        printf("Connection closed!\n");
+        return -1;
+    }
 
-	while(loop_size > 0) {
-		idx = 0;
+    //open file and send data
+    if ((fp = fopen(file_path, "rb")) == NULL)
+    {
+        fprintf(stderr, "Open file error.\n");
+        exit(1);
+    }
+    int loop_size = file_size;
+    nLeft = file_size % BUFF_SIZE; // cuz file size is not divisible by BUFF_SIZE
 
-		result += fread(sendbuff, 1, nLeft, fp); // use fread instead of fgets because fgets stop reading if newline is read
-		while (nLeft > 0)
-		{
-			// Assume s is a valid, connected stream socket
-			bytes_sent = send(client_sock, &sendbuff[idx], nLeft, 0);
-			if (bytes_sent <= 0)
-			{
-				// Error handler
-				printf("Connection closed.Trying again.\n");
-			}
-			nLeft -= bytes_sent;
-			idx += bytes_sent;
-		}
-		
-		bzero(sendbuff, sizeof(sendbuff)); 
-		loop_size -= BUFF_SIZE; // decrease unfinished bytes 
-		nLeft = BUFF_SIZE;		// reset nLeft
-	}
+    while (loop_size > 0)
+    {
+        idx = 0;
 
-	if(result != file_size) {
-		printf("Error reading file.\n");
-		return -1;
-	}
+        result += fread(sendbuff, 1, nLeft, fp); // use fread instead of fgets because fgets stop reading if newline is read
+        while (nLeft > 0)
+        {
+            // Assume s is a valid, connected stream socket
+            bytes_sent = send(client_sock, &sendbuff[idx], nLeft, 0);
+            if (bytes_sent <= 0)
+            {
+                // Error handler
+                printf("Connection closed.Trying again.\n");
+            }
+            nLeft -= bytes_sent;
+            idx += bytes_sent;
+        }
 
-	bytes_received = recv(client_sock, recv_data, BUFF_SIZE-1, 0);
-	if(bytes_received <= 0) {
-		printf("Connection closed!\n");
-		return -1;
-	}
-	else
-		recv_data[bytes_received] = '\0'; 
+        bzero(sendbuff, sizeof(sendbuff));
+        loop_size -= BUFF_SIZE; // decrease unfinished bytes
+        nLeft = BUFF_SIZE;      // reset nLeft
+    }
 
-	printf("%s\n", recv_data);
-	if(strcmp(recv_data, MSG_RECV_FILE) != 0)		//if cannot receive last message, file transfer is interrupted	
-		return -1;
+    if (result != file_size)
+    {
+        printf("Error reading file.\n");
+        return -1;
+    }
 
-	// clean
-	fclose(fp);
-	free(file_name);
-	return 0;
+    bytes_received = recv(client_sock, recv_data, BUFF_SIZE - 1, 0);
+    if (bytes_received <= 0)
+    {
+        printf("Connection closed!\n");
+        return -1;
+    }
+    else
+        recv_data[bytes_received] = '\0';
+
+    printf("%s\n", recv_data);
+    if (strcmp(recv_data, MSG_RECV_FILE) != 0) //if cannot receive last message, file transfer is interrupted
+        return -1;
+
+    // clean
+    fclose(fp);
+    free(file_name);
+    return 0;
 }
-
 
 //client receive file
 
 void clean_and_restore(FILE **fp)
 {
-	if (*fp != NULL)
-		fclose(*fp);
-	chdir("../..");
+    if (*fp != NULL)
+        fclose(*fp);
+    chdir("../..");
 }
 
 int client_recv_file(int conn_sock, char *dir_name, DT currentUser)
 {
-	struct stat st;
-	int size_file;
-	char recv_data[BUFF_SIZE];
-	int bytes_sent, bytes_received;
-	//char dir_name[] = "destination";
-	char *tok;
-	FILE *fp = NULL;
-	int nLeft, idx;
+    struct stat st;
+    int size_file;
+    char recv_data[BUFF_SIZE];
+    int bytes_sent, bytes_received;
+    //char dir_name[] = "destination";
+    char *tok;
+    FILE *fp = NULL;
+    int nLeft, idx;
 
-	// // check if directory exists, if not mkdir
-	// if (stat(dir_name, &st) == -1)
-	// {
-	// 	tok = strtok(dir_name, "/");
-	// 	while (tok != NULL)
-	// 	{
-	// 		mkdir(tok, 0700); //config permissions by changing 2nd argument
-	// 		chdir(tok);		  // chdir ~ cd
-	// 		tok = strtok(NULL, "/");
-	// 	}
-	// }
-	// else
-	// 	chdir(dir_name);
+    // // check if directory exists, if not mkdir
+    // if (stat(dir_name, &st) == -1)
+    // {
+    // 	tok = strtok(dir_name, "/");
+    // 	while (tok != NULL)
+    // 	{
+    // 		mkdir(tok, 0700); //config permissions by changing 2nd argument
+    // 		chdir(tok);		  // chdir ~ cd
+    // 		tok = strtok(NULL, "/");
+    // 	}
+    // }
+    // else
+    // 	chdir(dir_name);
 
-	//receives file name
-	bytes_received = recv(conn_sock, recv_data, BUFF_SIZE - 1, 0);
-	if (bytes_received <= 0)
-	{
-		printf("Connection closed\n");
-		clean_and_restore(&fp);
-		return -1; //meet error, aborted
-	}
-	else
-		recv_data[bytes_received] = '\0'; // check with client send format
+    //receives file name
+    bytes_received = recv(conn_sock, recv_data, BUFF_SIZE - 1, 0);
+    if (bytes_received <= 0)
+    {
+        printf("Connection closed\n");
+        clean_and_restore(&fp);
+        return -1; //meet error, aborted
+    }
+    else
+        recv_data[bytes_received] = '\0'; // check with client send format
 
-	if (recv_data[0] == '\0')
-	{
-		printf("Receiving data from client end. Exiting.\n");
-		clean_and_restore(&fp);
-		return 1;
-	}
+    if (recv_data[0] == '\0')
+    {
+        printf("Receiving data from client end. Exiting.\n");
+        clean_and_restore(&fp);
+        return 1;
+    }
 
-	if (strcmp(recv_data, MSG_CLOSE) == 0)
-	{ //file not found on client
-		printf("No file found on client. Transmission aborted.\n");
-		clean_and_restore(&fp);
-		return -1;
-	}
+    if (strcmp(recv_data, MSG_CLOSE) == 0)
+    { //file not found on client
+        printf("No file found on client. Transmission aborted.\n");
+        clean_and_restore(&fp);
+        return -1;
+    }
 
-	// check if file exists, if not create new one, else return error
-	// already at destination folder
-	// echo to client
-	char dest[MAX];
-	//currentuser/file
-	strcpy(dest,"./");
-    strcpy(dest,"downloads/");
-	strcat(dest,currentUser.username);
-	strcat(dest,"/");
-	strcat(dest,recv_data);
-	puts(dest);
-	if (stat(dest, &st) == -1)
-	{ // file does not exist
-		fp = fopen(dest, "wb");
-		if (fp == NULL)
-		{
-			printf("File path error\n");
-			clean_and_restore(&fp);
-			return -1;
-		}
-		bytes_sent = send(conn_sock, MSG_RECV, strlen(MSG_RECV), 0); //echo that received file name and no duplicate file on server
-		if (bytes_sent <= 0)
-		{
-			printf("Connection closed\n");
-			clean_and_restore(&fp);
-			return 1; //meet error, aborted
-		}
-	}
-	else
-	{
-		printf("Duplicate file.\n");
-		bytes_sent = send(conn_sock, MSG_DUP_FILE, strlen(MSG_DUP_FILE), 0);
-		if (bytes_sent <= 0)
-		{
-			printf("Connection closed\n");
-		}
-		clean_and_restore(&fp);
-		return 1;
-	}
+    // check if file exists, if not create new one, else return error
+    // already at destination folder
+    // echo to client
+    char dest[MAX];
+    //currentuser/file
+    strcpy(dest, "./");
+    strcpy(dest, "downloads/");
+    strcat(dest, currentUser.username);
+    strcat(dest, "/");
+    strcat(dest, recv_data);
+    puts(dest);
+    if (stat(dest, &st) == -1)
+    { // file does not exist
+        fp = fopen(dest, "wb");
+        if (fp == NULL)
+        {
+            printf("File path error\n");
+            clean_and_restore(&fp);
+            return -1;
+        }
+        bytes_sent = send(conn_sock, MSG_RECV, strlen(MSG_RECV), 0); //echo that received file name and no duplicate file on server
+        if (bytes_sent <= 0)
+        {
+            printf("Connection closed\n");
+            clean_and_restore(&fp);
+            return 1; //meet error, aborted
+        }
+    }
+    else
+    {
+        printf("Duplicate file.\n");
+        bytes_sent = send(conn_sock, MSG_DUP_FILE, strlen(MSG_DUP_FILE), 0);
+        if (bytes_sent <= 0)
+        {
+            printf("Connection closed\n");
+        }
+        clean_and_restore(&fp);
+        return 1;
+    }
 
-	printf("File name: %s\n", recv_data);
-	bzero(recv_data, bytes_received); //empty buffer
+    printf("File name: %s\n", recv_data);
+    bzero(recv_data, bytes_received); //empty buffer
 
-	//receives file size
-	bytes_received = recv(conn_sock, recv_data, BUFF_SIZE - 1, 0);
-	if (bytes_received <= 0)
-	{
-		printf("Connection closed\n");
-		clean_and_restore(&fp);
-		return 1; //meet error, aborted
-	}
-	else
-		recv_data[bytes_received] = '\0'; // check with client send format
+    //receives file size
+    bytes_received = recv(conn_sock, recv_data, BUFF_SIZE - 1, 0);
+    if (bytes_received <= 0)
+    {
+        printf("Connection closed\n");
+        clean_and_restore(&fp);
+        return 1; //meet error, aborted
+    }
+    else
+        recv_data[bytes_received] = '\0'; // check with client send format
 
-	size_file = atoi(recv_data);
+    size_file = atoi(recv_data);
 
-	printf("File size: %s\n", recv_data);
-	bzero(recv_data, bytes_received); //empty buffer
+    printf("File size: %s\n", recv_data);
+    bzero(recv_data, bytes_received); //empty buffer
 
-	nLeft = size_file % BUFF_SIZE; // cuz file size is not divisible by BUFF_SIZE
-	int loop_size = size_file;
+    nLeft = size_file % BUFF_SIZE; // cuz file size is not divisible by BUFF_SIZE
+    int loop_size = size_file;
 
-	while (loop_size > 0)
-	{
-		idx = 0; // reset idx
+    while (loop_size > 0)
+    {
+        idx = 0; // reset idx
 
-		while (nLeft > 0)
-		{
-			bytes_received = recv(conn_sock, &recv_data[idx], nLeft, 0); // read at missing data index
-			if (bytes_received <= 0)
-			{
-				// Error handler
-				printf("Connection closed. Trying again.\n");
-			}
-			idx += bytes_received; // if larger then socket size
-			nLeft -= bytes_received;
-		}
+        while (nLeft > 0)
+        {
+            bytes_received = recv(conn_sock, &recv_data[idx], nLeft, 0); // read at missing data index
+            if (bytes_received <= 0)
+            {
+                // Error handler
+                printf("Connection closed. Trying again.\n");
+            }
+            idx += bytes_received; // if larger then socket size
+            nLeft -= bytes_received;
+        }
 
-		fwrite(recv_data, 1, idx, fp); //idx is the real length of recv_data
-		bzero(recv_data, sizeof(recv_data));
-		loop_size -= BUFF_SIZE; // decrease unfinished bytes   		-
-		nLeft = BUFF_SIZE;		// reset nLeft
-	}
+        fwrite(recv_data, 1, idx, fp); //idx is the real length of recv_data
+        bzero(recv_data, sizeof(recv_data));
+        loop_size -= BUFF_SIZE; // decrease unfinished bytes   		-
+        nLeft = BUFF_SIZE;      // reset nLeft
+    }
 
-	// echo to client that transmission sucessfully completed
-	bytes_sent = send(conn_sock, MSG_RECV_FILE, strlen(MSG_RECV_FILE), 0);
-	if (bytes_sent <= 0)
-	{
-		printf("Connection closed\n");
-		clean_and_restore(&fp);
-		return 1; //meet error, aborted
-	}
+    // echo to client that transmission sucessfully completed
+    bytes_sent = send(conn_sock, MSG_RECV_FILE, strlen(MSG_RECV_FILE), 0);
+    if (bytes_sent <= 0)
+    {
+        printf("Connection closed\n");
+        clean_and_restore(&fp);
+        return 1; //meet error, aborted
+    }
 
-	// sucessful block
-	fclose(fp);
-	//chdir("../.."); //return original folder
+    // sucessful block
+    fclose(fp);
+    //chdir("../.."); //return original folder
 
-	return 0;
+    return 0;
 }
