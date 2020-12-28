@@ -7,6 +7,27 @@ int isEmpty(LIST *l)
 {
 	return (l->Head == NULL);
 }
+
+int ListSize(LIST *l)
+{
+	int size = 0;
+	NODE*p=l->Head;
+	if (l->Head != NULL)
+	{
+		do
+		{
+			size = size + 1;
+			p = p->next;
+		} while (p != NULL);
+	}
+	else
+	{
+		size = 0;
+		return size;
+	}
+	return size;
+}
+
 NODE *CreatNODE(DT a)
 {
 	NODE *p = (NODE *)malloc(sizeof(NODE));
@@ -220,26 +241,26 @@ void AddSort(LIST *l, DT a)
 		}
 	}
 }
-void Update(LIST *l, DT a)
-{
-	NODE *p = l->Head;
-	while (p != NULL)
-	{
-		if (strcmp(p->x.username, a.username) == 0)
-		{
-			strcpy(p->x.password, a.password);
-			p->x.status = a.status;
-		}
-		p = p->next;
-	}
-}
+// void Update(LIST *l, DT a)
+// {
+// 	NODE *p = l->Head;
+// 	while (p != NULL)
+// 	{
+// 		if (strcmp(p->x.username, a.username) == 0)
+// 		{
+// 			strcpy(p->x.password, a.password);
+// 			p->x.status = a.status;
+// 		}
+// 		p = p->next;
+// 	}
+// }
 
 void PrintList(LIST *l)
 {
 	NODE *p = l->Head;
 	while (p != NULL)
 	{
-		printf("%s | %d\n", p->x.username, p->x.status);
+		printf("%s |\n", p->x.username);
 		p = p->next;
 	}
 }

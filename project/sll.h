@@ -3,16 +3,18 @@
 #include <ctype.h>
 #include <string.h>
 #include <time.h>
+//#include "listFile.c"
 #define MAX 100
 typedef struct 
 {
     char username[MAX];
     char password[MAX];
-    int status;
     int number_act;
     int number_sign;
     char homepage[MAX];
+    //listFile *list;
 }DT;
+
 typedef struct NODE
 {
     DT x;
@@ -42,3 +44,4 @@ void DeletePos(LIST *l,int x);
 LIST *SeverseLIST(LIST *l);
 void AddSort(LIST *l,DT a);
 void PrintList(LIST *l);
+int ListSize(LIST *l);

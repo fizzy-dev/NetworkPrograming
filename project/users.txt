@@ -1,6 +1,1 @@
-quang0 123456 1
-quang1 123456 2
-quang2 123456 0
-quang3 123456 1
-quang4 123456 2
-quang5 123456 0
+quang 123
