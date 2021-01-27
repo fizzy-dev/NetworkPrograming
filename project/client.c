@@ -551,9 +551,27 @@ void findByUserName(int sock, DT currentUser)
 
 void helpUser(int sock)
 {
-    char buff[MAX];
+    
+    char buff[100];
     recv(sock, buff, sizeof(buff), 0);
     puts(buff);
+    recv(sock, buff, sizeof(buff), 0);
+    puts(buff);
+    recv(sock, buff, sizeof(buff), 0);
+    puts(buff);
+    recv(sock, buff, sizeof(buff), 0);
+    puts(buff);
+    recv(sock, buff, sizeof(buff), 0);
+    puts(buff);
+    recv(sock, buff, sizeof(buff), 0);
+    puts(buff);
+    recv(sock, buff, sizeof(buff), 0);
+    puts(buff);
+    recv(sock, buff, sizeof(buff), 0);
+    puts(buff);
+    recv(sock, buff, sizeof(buff), 0);
+    puts(buff);
+
 }
 
 void logoutUser(int sock, DT currentUser)
