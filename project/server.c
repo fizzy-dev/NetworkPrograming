@@ -432,9 +432,25 @@ int checkUser(DT user, int new_socket, LIST *listUser)
 				//9.Help
 				if (strcmp(status, "help") == 0)
 				{
-					char buff[MAX];
-					strcpy(buff, "comming soon ^^");
-					send(new_socket, buff, sizeof(buff), 0);
+					char help1[MAX] = "- Huong dan su dung chuc nang so 5.";
+					char help2[MAX] = "- Huong dan su dung chuc nang so 6.";
+					char help2_1[MAX] ="+ Dien ten file muon tao vao duoi dong Input file name (Khong can them duoi txt) roi Enter";
+					char help2_2[MAX] ="+ Sau do nhap noi dung roi Enter";
+					char help3[MAX] = "- Huong dan su dung chuc nang so 7.";
+					char help3_1[MAX] ="+ Su dung duong dan tuong doi de nhap duong dan cho file (co nhap ca duoi file de phan biet dinh dang)";
+					char help4[MAX] = "- Huong dan su dung chuc nang so 8.";
+					char help4_1[MAX] ="+ Chon ten nguoi dung ma ban muon download file tu ho";
+					char help4_2[MAX] ="+ Sau do nhap ten file vao phan what file";
+					char help[1000];
+					send(new_socket, help1, sizeof(help1), 0);
+					send(new_socket, help2, sizeof(help2), 0);
+					send(new_socket, help2_1, sizeof(help2_1), 0);
+					send(new_socket, help2_2, sizeof(help2_2), 0);
+					send(new_socket, help3, sizeof(help3), 0);
+					send(new_socket, help3_1, sizeof(help3_1), 0);
+					send(new_socket, help4, sizeof(help4), 0);
+					send(new_socket, help4_1, sizeof(help4_1), 0);
+					send(new_socket, help4_2, sizeof(help4_2), 0);
 					continue;
 				}
 				//10.log out
